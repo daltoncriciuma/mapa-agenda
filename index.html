@@ -71,13 +71,13 @@
       geojsonDados.features.forEach(f => {
         if (mesSelecionado && f.properties.mes != mesSelecionado) return;
 
-        // LABEL + PINO (lado a lado, pino SEMPRE visível)
+        // LABEL + PINO (pino à esquerda, rótulo à direita)
         const labelHTML = `
           <div style="display:flex;align-items:center;">
-            <span style="font-size:11px;font-weight:bold;color:#d32f2f;text-shadow:1px 1px 3px #fff,0 0 2px #fff;white-space:nowrap;margin-right:6px;">
+            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${corPino}.png" style="width:25px;height:41px;vertical-align:middle;margin-right:6px;">
+            <span style="font-size:11px;font-weight:bold;color:#d32f2f;text-shadow:1px 1px 3px #fff,0 0 2px #fff;white-space:nowrap;">
               ${resumoTitulo(f.properties.titulo)}
             </span>
-            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${corPino}.png" style="width:25px;height:41px;vertical-align:middle;">
           </div>
         `;
 
@@ -85,7 +85,7 @@
           className: '',
           html: labelHTML,
           iconSize: [160, 41],
-          iconAnchor: [135, 41],
+          iconAnchor: [25, 41], // <- pino é âncora
         });
 
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
