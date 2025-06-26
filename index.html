@@ -11,6 +11,30 @@
   </style>
 </head>
 <body>
+<script>
+  // Senha de acesso
+  const senha = '123';
+  let tentativas = 0;
+
+  function pedirSenha() {
+    const tentativa = prompt("Este mapa é restrito. Digite a senha para acessar:");
+    if (tentativa === senha) {
+      document.getElementById("conteudoMapa").style.display = "block";
+    } else {
+      tentativas++;
+      if (tentativas < 3) {
+        alert("Senha incorreta. Tente novamente.");
+        pedirSenha();
+      } else {
+        alert("Acesso bloqueado.");
+        window.location.href = "https://www.google.com";
+      }
+    }
+  }
+  window.onload = pedirSenha;
+</script>
+<div id="conteudoMapa" style="display:none;">
+
   <div id="filtro">
     <label>Filtrar por mês:</label>
     <select id="mesSelect" onchange="filtrarMes()">
@@ -42,7 +66,7 @@
     let marcadores = [];
     let geojsonDados;
 
-    // Link direto do teu GeoJSON no GitHub Pages!
+    // Link direto do GeoJSON no GitHub Pages
     const geojsonURL = 'https://daltoncriciuma.github.io/mapa-agenda/eventos.geojson';
 
     fetch(geojsonURL)
@@ -83,5 +107,6 @@
       mostrarPontos(mes);
     }
   </script>
+</div>
 </body>
 </html>
