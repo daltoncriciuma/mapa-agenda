@@ -49,4 +49,54 @@
         if(e.latitude && e.longitude){
           let marker = L.marker([e.latitude, e.longitude])
             .addTo(map)
-            .b
+            .bindPopup(`<b>${e.titulo || e.Titulo || e.nome || ""}</b><br>${e.data || e.Data || ""}`);
+          marcadores.push(marker);
+        }
+      });
+    }
+
+    // Inicializa mapa no centro aproximado de Criciúma
+    const map = L.map('map').setView([-28.6726, -49.3734], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Carrega o JSON com fetch
+    fetch('MapaAgenda.json')
+      .then(resp => resp.json())
+      .then(json => {
+        dadosAgenda = json;
+
+        // Popula o filtro de mês automaticamente
+        let meses = new Set();
+        json.forEach(e => {
+          let dataStr = e.data || e.Data || "";
+          let mes = "";
+          if(dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
+          else if(dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
+          if(mes) meses.add(mes);
+        });
+        let filtroMes = document.getElementById("filtroMes");
+        Array.from(meses).sort().forEach(mes => {
+          let nomeMes = mes.padStart(2, "0") + " (" + ({"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}[mes]||"") + ")";
+          let opt = document.createElement("option");
+          opt.value = mes;
+          opt.textContent = nomeMes;
+          filtroMes.appendChild(opt);
+        });
+
+        // Primeira plotagem: todos
+        adicionarMarcadores("todos");
+
+        // Evento de filtro
+        filtroMes.addEventListener("change", (ev)=>{
+          adicionarMarcadores(ev.target.value);
+        });
+      })
+      .catch(err => {
+        alert("Erro ao carregar MapaAgenda.json!\n\nDetalhe: " + err);
+      });
+  </script>
+</body>
+</html>
