@@ -1,32 +1,42 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Mapa - Posto Sonho Meu</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        #map { height: 100vh; }
-    </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta charset="utf-8" />
+  <title>Mapa de Compromissos - Posto Sonho Meu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+zNCD39p2zG1EAgL0CzD3jRnsMZAA8F2tQ4Hqf0kE="
+    crossorigin=""
+  />
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
+  <div id="map"></div>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j7kT++bRkVjQ4zA9z5E+d5SO1kz1w+U2QkPvUqM="
+    crossorigin="">
+  </script>
+  <script>
+    const coordenadas = [-28.61795, -49.23394]; // Coordenadas do início do acesso pela SC-108
+    const mapa = L.map('map').setView(coordenadas, 17);
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        const coordenadas = [-28.61795, -49.23394];
-        const map = L.map('map').setView(coordenadas, 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mapa);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.marker(coordenadas)
-            .addTo(map)
-            .bindPopup('<b>6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</b>')
-            .openPopup();
-    </script>
+    L.marker(coordenadas)
+      .addTo(mapa)
+      .bindPopup("<b>6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</b>")
+      .openPopup();
+  </script>
 </body>
 </html>
