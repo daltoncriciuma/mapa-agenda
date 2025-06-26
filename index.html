@@ -1,185 +1,54 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>Mapa da Agenda</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <title>Mapa de Compromissos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    #map { height: 90vh; width: 100vw; }
-    #filtro { padding: 10px; background: #fff; display: flex; align-items: center; }
-    #btnAtualizar {
-      margin-left: 12px; padding: 6px 14px; border: none; border-radius: 6px;
-      background: #1976d2; color: #fff; font-weight: bold; cursor: pointer;
-      font-size: 14px; transition: background 0.2s;
+    #map {
+      height: 100vh;
     }
-    #btnAtualizar:hover { background: #1259a7; }
-    .evento-label {
-      font-size: 13px;
+
+    .custom-label {
+      font-size: 10px; /* ajuste aqui conforme necessário */
       font-weight: bold;
-      color: #d32f2f;
-      text-align: left;
-      text-shadow: 1px 1px 3px #fff, 0 0 2px #fff;
+      color: red;
       white-space: nowrap;
-      pointer-events: none;
-      user-select: none;
-      margin-left: 5px;
-      background: rgba(255,255,255,0.9);
-      padding: 1px 8px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 2px 4px;
       border-radius: 4px;
-      max-width: 360px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      transition: font-size 0.2s, background 0.2s;
-      box-shadow: 0 0 5px #eee;
-    }
-    .evento-label.ativo {
-      font-size: 16px;
-      background: #fff6c6;
-      z-index: 1000;
-    }
-    @media (max-width: 600px) {
-      .evento-label { max-width: 160px; font-size: 11px; }
-      .evento-label.ativo { font-size: 13px; }
     }
   </style>
 </head>
 <body>
-<div id="conteudoMapa">
 
-  <div id="filtro">
-    <label>Filtrar por mês:</label>
-    <select id="mesSelect" onchange="filtrarMes()">
-      <option value="">Todos</option>
-      <option value="1">Janeiro</option>
-      <option value="2">Fevereiro</option>
-      <option value="3">Março</option>
-      <option value="4">Abril</option>
-      <option value="5">Maio</option>
-      <option value="6">Junho</option>
-      <option value="7">Julho</option>
-      <option value="8">Agosto</option>
-      <option value="9">Setembro</option>
-      <option value="10">Outubro</option>
-      <option value="11">Novembro</option>
-      <option value="12">Dezembro</option>
-    </select>
-    <button id="btnAtualizar" onclick="mostrarPontos()">Atualizar eventos</button>
-  </div>
+<div id="map"></div>
 
-  <div id="map"></div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const geojsonURL = 'https://daltoncriciuma.github.io/mapa-agenda/eventos.geojson';
+<script>
+  // Inicializa o mapa
+  const map = L.map('map').setView([-28.6235, -49.2705], 14); // Use a coordenada que desejar
 
-    let marcadores = [];
-    let labelMarkers = [];
+  // Adiciona camada de mapa base
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
 
-    const mapa = L.map('map').setView([-28.75, -49.41], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(mapa);
+  // Adiciona marcador com rótulo pequeno
+  const marcador = L.marker([-28.6235, -49.2705], {
+    icon: L.divIcon({
+      className: 'custom-label',
+      html: '6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)',
+    })
+  }).addTo(map);
+</script>
 
-    // Função para pegar só a parte principal do nome
-    function nomeResumo(titulo) {
-      // Até o segundo hífen (" -"), ou até o fechamento do parênteses
-      let partes = titulo.split(" - ");
-      if (partes.length > 2) {
-        return partes.slice(0, 3).join(" - "); // até o terceiro pedaço
-      }
-      return partes[0] + (partes[1] ? " - " + partes[1] : "");
-    }
-
-    function mostrarPontos() {
-      marcadores.forEach(m => mapa.removeLayer(m));
-      marcadores = [];
-      labelMarkers.forEach(m => mapa.removeLayer(m));
-      labelMarkers = [];
-      let bounds = [];
-
-      fetch(geojsonURL + '?v=' + Date.now())
-        .then(res => res.json())
-        .then(geojson => {
-          const mesSelecionado = document.getElementById('mesSelect').value;
-
-          geojson.features.forEach((f, idx) => {
-            if (mesSelecionado && String(f.properties.mes) !== mesSelecionado) return;
-            const lat = f.geometry.coordinates[1];
-            const lng = f.geometry.coordinates[0];
-            const titulo = f.properties.titulo;
-            const nomeLabel = nomeResumo(titulo);
-
-            // Label customizado ao lado do pino
-            const labelIcon = L.divIcon({
-              className: 'evento-label',
-              html: `<span id="label-${idx}">${nomeLabel}</span>`,
-              iconSize: [380, 22],
-              iconAnchor: [-10, 20]
-            });
-
-            // Pino vermelho
-            const marker = L.marker([lat, lng], {
-              icon: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-              })
-            }).addTo(mapa);
-
-            // Label fixo ao lado
-            const labelMarker = L.marker([lat, lng], {
-              icon: labelIcon,
-              interactive: false
-            }).addTo(mapa);
-            labelMarkers.push(labelMarker);
-
-            // Popup com destaque no label ao abrir
-            marker.bindPopup(
-              `<b>${nomeLabel}</b><br>
-              Data: ${new Date(f.properties.data).toLocaleString()}<br>
-              ${f.properties.descricao ? `<pre>${f.properties.descricao}</pre>` : ''}
-              <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`
-            );
-
-            marker.on('popupopen', function() {
-              labelMarkers.forEach((m, i) => {
-                const el = document.getElementById(`label-${i}`);
-                if(el) el.classList.remove('ativo');
-              });
-              const el = document.getElementById(`label-${idx}`);
-              if(el) el.classList.add('ativo');
-            });
-            marker.on('popupclose', function() {
-              const el = document.getElementById(`label-${idx}`);
-              if(el) el.classList.remove('ativo');
-            });
-
-            marcadores.push(marker);
-            bounds.push([lat, lng]);
-          });
-
-          if (bounds.length === 1) {
-            mapa.setView(bounds[0], 15);
-          } else if (bounds.length > 1) {
-            mapa.fitBounds(bounds);
-          }
-        })
-        .catch(err => alert("Erro ao carregar eventos.geojson: " + err));
-    }
-
-    function filtrarMes() {
-      mostrarPontos();
-    }
-
-    // Inicializa o mapa na primeira carga
-    mostrarPontos();
-  </script>
-</div>
 </body>
 </html>
