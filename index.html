@@ -25,20 +25,17 @@
     let marcadores = [];
     let dadosAgenda = [];
 
-    // Função para limpar todos os marcadores do mapa
     function limparMarcadores() {
       marcadores.forEach(m => m.remove());
       marcadores = [];
     }
 
-    // Função para adicionar marcadores com base no filtro
     function adicionarMarcadores(filtroMes) {
       limparMarcadores();
       let filtrados = dadosAgenda;
       if(filtroMes !== "todos") {
         filtrados = dadosAgenda.filter(e => {
-          // Data em formato YYYY-MM-DD ou DD/MM/YYYY?
-          let dataStr = e.data || e.Data || "";
+          let dataStr = e.data || "";
           let mes = "";
           if(dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
           else if(dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
@@ -49,21 +46,21 @@
         if(e.latitude && e.longitude){
           let marker = L.marker([e.latitude, e.longitude])
             .addTo(map)
-            .bindPopup(`<b>${e.titulo || e.Titulo || e.nome || ""}</b><br>${e.data || e.Data || ""}`);
+            .bindPopup(`<b>${e.titulo || ""}</b><br>${e.data || ""}`);
           marcadores.push(marker);
         }
       });
     }
 
-    // Inicializa mapa no centro aproximado de Criciúma
-    const map = L.map('map').setView([-28.6726, -49.3734], 11);
+    // Inicializa mapa centrado na média dos pontos
+    const map = L.map('map').setView([-28.62, -49.23], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     // Carrega o JSON com fetch
-    fetch('MapaAgenda.json')
+    fetch('pinos.json')
       .then(resp => resp.json())
       .then(json => {
         dadosAgenda = json;
@@ -71,7 +68,7 @@
         // Popula o filtro de mês automaticamente
         let meses = new Set();
         json.forEach(e => {
-          let dataStr = e.data || e.Data || "";
+          let dataStr = e.data || "";
           let mes = "";
           if(dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
           else if(dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
@@ -95,7 +92,7 @@
         });
       })
       .catch(err => {
-        alert("Erro ao carregar MapaAgenda.json!\n\nDetalhe: " + err);
+        alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
       });
   </script>
 </body>
