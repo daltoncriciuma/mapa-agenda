@@ -40,10 +40,10 @@
     // COR DO PINO
     const corPino = 'red';
 
-    // Função para pegar só o número e o primeiro nome (ex: "6130 - ROCHA")
+    // Pega até cinco palavras do título
     function resumoTitulo(titulo) {
       const partes = titulo.split(" ");
-      return partes.slice(0, 3).join(" ");
+      return partes.slice(0, 5).join(" ");
     }
 
     const mapa = L.map('map').setView([-28.68, -49.37], 10);
@@ -84,8 +84,8 @@
         const customIcon = L.divIcon({
           className: '',
           html: labelHTML,
-          iconSize: [160, 41],
-          iconAnchor: [25, 41], // <- pino é âncora
+          iconSize: [210, 41], // aumente aqui se precisar ainda mais espaço!
+          iconAnchor: [25, 41],
         });
 
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
