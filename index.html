@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa de Compromissos - Posto Sonho Meu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Coordenadas corretas: [latitude, longitude]
+  const coordenadas = [-28.62423, -49.23871];
+
+  const map = L.map('map').setView(coordenadas, 17);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  L.marker(coordenadas, {
+    icon: L.divIcon({
+      className: '',
+      html: '<div style="font-size:10px; font-weight:bold; color:red; background:white; padding:2px 4px; border-radius:4px; white-space:nowrap;">6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</div>'
+    })
+  }).addTo(map);
+</script>
+
+</body>
+</html>
