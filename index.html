@@ -10,10 +10,10 @@
     #map { height: 90vh; width: 100vw; margin: 0; padding: 0;}
     #filtro { padding: 10px; background: #fff; }
     .evento-label {
-      font-size: 11px; /* Diminuído */
+      font-size: 11px;
       font-weight: bold;
       color: #d32f2f;
-      text-align: center;
+      text-align: left;
       text-shadow: 1px 1px 3px #fff, 0 0 2px #fff;
       white-space: nowrap;
       padding-bottom: 3px;
@@ -105,12 +105,12 @@
         marcadores.push(marker);
         bounds.push([f.geometry.coordinates[1], f.geometry.coordinates[0]]);
 
-        // Adiciona o label acima do pino, só número e nome
+        // Rótulo ao lado esquerdo do pino
         const labelIcon = L.divIcon({
           className: 'evento-label',
           html: resumoTitulo(f.properties.titulo),
           iconSize: [120, 16],
-          iconAnchor: [60, 40]
+          iconAnchor: [0, 20] // <- alinhado à esquerda do pino, na altura certa
         });
         L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: labelIcon,
