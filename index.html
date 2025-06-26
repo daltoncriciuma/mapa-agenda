@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa - Posto Sonho Meu</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #map { height: 100vh; }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const coordenadas = [-28.61795, -49.23394];
+        const map = L.map('map').setView(coordenadas, 17);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker(coordenadas)
+            .addTo(map)
+            .bindPopup('<b>6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</b>')
+            .openPopup();
+    </script>
+</body>
+</html>
