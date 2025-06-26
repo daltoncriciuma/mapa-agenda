@@ -52,41 +52,34 @@
       });
     }
 
-    // Inicializa mapa centrado na média dos pontos
-    const map = L.map('map').setView([-28.62, -49.23], 13);
+    // Inicializa mapa centrado na média dos pontos do arquivo
+    const map = L.map('map').setView([-28.626, -49.242], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Carrega o JSON com fetch
     fetch('pinos.json')
       .then(resp => resp.json())
       .then(json => {
         dadosAgenda = json;
 
-        // Popula o filtro de mês automaticamente
-        let meses = new Set();
-        json.forEach(e => {
-          let dataStr = e.data || "";
-          let mes = "";
-          if(dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
-          else if(dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
-          if(mes) meses.add(mes);
-        });
+        // Filtro de mês: exibe todos os meses do ano (01 a 12)
         let filtroMes = document.getElementById("filtroMes");
-        Array.from(meses).sort().forEach(mes => {
-          let nomeMes = mes.padStart(2, "0") + " (" + ({"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}[mes]||"") + ")";
+        const nomesMeses = {
+          "01":"Jan", "02":"Fev", "03":"Mar", "04":"Abr", "05":"Mai", "06":"Jun",
+          "07":"Jul", "08":"Ago", "09":"Set", "10":"Out", "11":"Nov", "12":"Dez"
+        };
+        for (let i = 1; i <= 12; i++) {
+          let mes = i.toString().padStart(2, "0");
           let opt = document.createElement("option");
           opt.value = mes;
-          opt.textContent = nomeMes;
+          opt.textContent = `${mes} (${nomesMeses[mes]})`;
           filtroMes.appendChild(opt);
-        });
+        }
 
-        // Primeira plotagem: todos
         adicionarMarcadores("todos");
 
-        // Evento de filtro
         filtroMes.addEventListener("change", (ev)=>{
           adicionarMarcadores(ev.target.value);
         });
