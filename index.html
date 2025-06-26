@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa da Agenda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 90vh; width: 100%; }
+    #filtro { padding: 10px; }
+  </style>
+</head>
+<body>
+  <div id="filtro">
+    <label>Filtrar por mês:</label>
+    <select id="mesSelect" onchange="filtrarMes()">
+      <option value="">Todos</option>
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const mapa = L.map('map').setView([-28.68, -49.37], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(mapa);
+
+    let marcadores = [];
+    let geojsonDados;
+
+    // Link direto do teu GeoJSON no Drive
+    const geojsonURL = 'https://drive.google.com/uc?export=download&id=1B8yRBHfoMXNiQe5Q_ZKz1bW11Bk4tFUA';
+
+    fetch(geojsonURL)
+      .then(res => res.json())
+      .then(data => {
+        geojsonDados = data;
+        mostrarPontos();
+      });
+
+    function mostrarPontos(mesSelecionado = '') {
+      marcadores.forEach(m => mapa.removeLayer(m));
+      marcadores = [];
+      let bounds = [];
+
+      geojsonDados.features.forEach(f => {
+        if (mesSelecionado && f.properties.mes != mesSelecionado) return;
+
+        const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]])
+          .bindPopup(`<strong>${f.properties.titulo}</strong><br>
+            Data: ${new Date(f.properties.data).toLocaleString()}<br>
+            ${f.properties.descricao || ''}<br>
+            <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`);
+        marker.addTo(mapa);
+        marcadores.push(marker);
+        bounds.push([f.geometry.coordinates[1], f.geometry.coordinates[0]]);
+      });
+
+      // Centraliza e ajusta zoom para mostrar todos os pontos encontrados
+      if (bounds.length === 1) {
+        mapa.setView(bounds[0], 15);
+      } else if (bounds.length > 1) {
+        mapa.fitBounds(bounds);
+      }
+    }
+
+    function filtrarMes() {
+      const mes = document.getElementById('mesSelect').value;
+      mostrarPontos(mes);
+    }
+  </script>
+</body>
+</html>
