@@ -7,14 +7,38 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map { height: 92vh; width: 100%; }
-    #filtros { padding: 10px; background: #fff; border-radius: 6px; box-shadow: 0 2px 6px #0002; margin: 10px; position: absolute; z-index: 1000; }
-    #atualizarPinos { margin: 10px 10px 0 10px; padding: 5px 15px; border-radius: 4px; border: 1px solid #888; background: #eee; cursor:pointer; }
-    @media(max-width:600px){ #filtros{width:98vw;left:0;margin:5px;}}
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px 8px 12px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px #0002;
+      position: absolute;
+      margin: 12px;
+      z-index: 1000;
+    }
+    #atualizarPinos {
+      background: #0057b8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 18px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor:pointer;
+      transition: background 0.2s;
+    }
+    #atualizarPinos:hover { background: #003d80; }
+    @media(max-width:600px){
+      #topbar{width:96vw;left:0;margin:7px;}
+    }
   </style>
 </head>
 <body>
-  <button id="atualizarPinos">Atualizar pinos</button>
-  <div id="filtros">
+  <div id="topbar">
+    <button id="atualizarPinos">Atualizar pinos</button>
     <label for="filtroMes">Filtrar por mês:</label>
     <select id="filtroMes">
       <option value="todos">Todos</option>
