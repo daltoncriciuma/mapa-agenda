@@ -6,25 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    #map { height: 90vh; width: 100%; }
-    #filtro { padding: 10px; }
-    .leaflet-div-icon {
-      background: transparent !important;
-      border: none !important;
-    }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #map { height: 90vh; width: 100vw; margin: 0; padding: 0;}
+    #filtro { padding: 10px; background: #fff; }
     .evento-label {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
-      color: #d32f2f; /* mesma cor do pino, pode trocar aqui */
+      color: #d32f2f;
       text-align: center;
       text-shadow: 1px 1px 3px #fff, 0 0 2px #fff;
-      margin-bottom: 2px;
+      white-space: nowrap;
+      padding-bottom: 3px;
+      pointer-events: none;
+      user-select: none;
     }
   </style>
 </head>
 <body>
 <script>
-  // Proteção com senha
+  // Senha de acesso
   const senha = '123';
   let tentativas = 0;
   function pedirSenha() {
@@ -69,10 +69,10 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // COR DO PINO (troque aqui para 'red', 'blue', 'green', 'orange', 'yellow', 'violet', 'grey', 'black')
+    // COR DO PINO (troca aqui se quiser outra cor)
     const corPino = 'red';
 
-    // Ícone personalizado do pino
+    // Ícone do pino
     function iconePinoLeaflet(cor) {
       return L.icon({
         iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${cor}.png`,
@@ -92,7 +92,6 @@
     let marcadores = [];
     let geojsonDados;
 
-    // Link do GeoJSON hospedado no GitHub Pages
     const geojsonURL = 'https://daltoncriciuma.github.io/mapa-agenda/eventos.geojson';
 
     fetch(geojsonURL)
@@ -113,20 +112,22 @@
         // Adiciona o marcador colorido
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: iconePinoLeaflet(corPino)
-        }).bindPopup(`<strong>${f.properties.titulo}</strong><br>
+        }).bindPopup(
+          `<strong>${f.properties.titulo}</strong><br>
             Data: ${new Date(f.properties.data).toLocaleString()}<br>
             ${f.properties.descricao || ''}<br>
-            <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`);
+            <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`
+        );
         marker.addTo(mapa);
         marcadores.push(marker);
         bounds.push([f.geometry.coordinates[1], f.geometry.coordinates[0]]);
 
-        // Adiciona o label do evento acima do pino
+        // Adiciona o label acima do pino, somente o título
         const labelIcon = L.divIcon({
-          className: 'leaflet-div-icon',
-          html: `<div class="evento-label">${f.properties.titulo}</div>`,
-          iconSize: [120, 20],
-          iconAnchor: [60, 30] // centraliza acima do pino
+          className: 'evento-label',
+          html: f.properties.titulo,
+          iconSize: [120, 18],
+          iconAnchor: [60, 40] // Centraliza o texto acima do pino
         });
         L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: labelIcon,
