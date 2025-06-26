@@ -8,10 +8,12 @@
   <style>
     #map { height: 92vh; width: 100%; }
     #filtros { padding: 10px; background: #fff; border-radius: 6px; box-shadow: 0 2px 6px #0002; margin: 10px; position: absolute; z-index: 1000; }
+    #atualizarPinos { margin: 10px 10px 0 10px; padding: 5px 15px; border-radius: 4px; border: 1px solid #888; background: #eee; cursor:pointer; }
     @media(max-width:600px){ #filtros{width:98vw;left:0;margin:5px;}}
   </style>
 </head>
 <body>
+  <button id="atualizarPinos">Atualizar pinos</button>
   <div id="filtros">
     <label for="filtroMes">Filtrar por mês:</label>
     <select id="filtroMes">
@@ -37,8 +39,8 @@
         filtrados = dadosAgenda.filter(e => {
           let dataStr = e.data || "";
           let mes = "";
-          if(dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
-          else if(dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
+          if(dataStr.includes("-")) mes = dataStr.split("-")[1];
+          else if(dataStr.includes("/")) mes = dataStr.split("/")[1];
           return mes === filtroMes;
         });
       }
@@ -52,19 +54,26 @@
       });
     }
 
-    // Inicializa mapa centrado na média dos pontos do arquivo
     const map = L.map('map').setView([-28.626, -49.242], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    function carregarPinos() {
+      fetch('pinos.json')
+        .then(resp => resp.json())
+        .then(json => {
+          dadosAgenda = json;
+          adicionarMarcadores(document.getElementById("filtroMes").value);
+        });
+    }
+
     fetch('pinos.json')
       .then(resp => resp.json())
       .then(json => {
         dadosAgenda = json;
 
-        // Filtro de mês: exibe todos os meses do ano (01 a 12)
         let filtroMes = document.getElementById("filtroMes");
         const nomesMeses = {
           "01":"Jan", "02":"Fev", "03":"Mar", "04":"Abr", "05":"Mai", "06":"Jun",
@@ -83,6 +92,8 @@
         filtroMes.addEventListener("change", (ev)=>{
           adicionarMarcadores(ev.target.value);
         });
+
+        document.getElementById("atualizarPinos").onclick = carregarPinos;
       })
       .catch(err => {
         alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
