@@ -9,6 +9,20 @@
     html, body { height: 100%; margin: 0; padding: 0; }
     #map { height: 90vh; width: 100vw; margin: 0; padding: 0;}
     #filtro { padding: 10px; background: #fff; }
+    .btn-cor {
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid #333;
+      display: inline-block; margin: 2px; cursor: pointer;
+      outline: none;
+    }
+    .btn-cor.vermelho { background: #d32f2f; }
+    .btn-cor.azul { background: #1e88e5; }
+    .btn-cor.verde { background: #43a047; }
+    .btn-cor.amarelo { background: #fbc02d; }
+    .label-titulo {
+      font-size: 11px; font-weight: bold; color: #d32f2f;
+      text-shadow: 1px 1px 3px #fff, 0 0 2px #fff; white-space: nowrap;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
@@ -37,8 +51,19 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // COR DO PINO
-    const corPino = 'red';
+    // Cole aqui a URL DO TEU APPS SCRIPT, termina com /exec
+    const apiCores = 'SUA_URL_DA_APPS_SCRIPT';
+
+    // Mapeia cor amigável para nome do pino
+    const mapaCor = {
+      vermelho: 'red',
+      azul: 'blue',
+      verde: 'green',
+      amarelo: 'yellow'
+    };
+
+    // Cores disponíveis
+    const opcoesCor = ['vermelho', 'azul', 'verde', 'amarelo'];
 
     // Pega até cinco palavras do título
     function resumoTitulo(titulo) {
@@ -53,29 +78,58 @@
 
     let marcadores = [];
     let geojsonDados;
+    let coresPorId = {};
 
     const geojsonURL = 'https://daltoncriciuma.github.io/mapa-agenda/eventos.geojson';
 
-    fetch(geojsonURL)
-      .then(res => res.json())
-      .then(data => {
-        geojsonDados = data;
-        mostrarPontos();
-      });
+    // Busca cores salvas no Google Sheets
+    async function buscarCores() {
+      const res = await fetch(apiCores);
+      coresPorId = await res.json();
+    }
 
-    function mostrarPontos(mesSelecionado = '') {
+    // Salva cor no Google Sheets (pelo Apps Script)
+    async function salvarCor(id, cor) {
+      await fetch(apiCores, {
+        method: "POST",
+        body: JSON.stringify({ id, cor }),
+        headers: { "Content-Type": "application/json" }
+      });
+      coresPorId[id] = cor; // atualiza localmente
+    }
+
+    // Gera HTML dos botões de cor
+    function botoesCorHtml(id) {
+      return opcoesCor.map(cor =>
+        `<button class="btn-cor ${cor}" title="${cor[0].toUpperCase() + cor.slice(1)}"
+          onclick="window.trocarCorPino('${id}','${cor}')"></button>`
+      ).join('');
+    }
+
+    // Disponibiliza função global para o popup acessar
+    window.trocarCorPino = async function(id, cor) {
+      await salvarCor(id, cor);
+      mostrarPontos(document.getElementById('mesSelect').value); // atualiza todos os marcadores
+    };
+
+    // Exibe os pinos com as cores salvas ou padrão
+    async function mostrarPontos(mesSelecionado = '') {
       marcadores.forEach(m => mapa.removeLayer(m));
       marcadores = [];
       let bounds = [];
+      await buscarCores();
 
       geojsonDados.features.forEach(f => {
         if (mesSelecionado && f.properties.mes != mesSelecionado) return;
+        const id = f.properties.titulo;
+
+        const corAtual = mapaCor[coresPorId[id]] || 'red';
 
         // LABEL + PINO (pino à esquerda, rótulo à direita)
         const labelHTML = `
           <div style="display:flex;align-items:center;">
-            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${corPino}.png" style="width:25px;height:41px;vertical-align:middle;margin-right:6px;">
-            <span style="font-size:11px;font-weight:bold;color:#d32f2f;text-shadow:1px 1px 3px #fff,0 0 2px #fff;white-space:nowrap;">
+            <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${corAtual}.png" style="width:25px;height:41px;vertical-align:middle;margin-right:6px;">
+            <span class="label-titulo">
               ${resumoTitulo(f.properties.titulo)}
             </span>
           </div>
@@ -88,14 +142,18 @@
           iconAnchor: [25, 41],
         });
 
+        // Botões de cor no popup
+        const popupHtml = `
+          <strong>${f.properties.titulo}</strong><br>
+          Data: ${new Date(f.properties.data).toLocaleString()}<br>
+          ${f.properties.descricao || ''}<br>
+          <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>
+          <div style="margin-top:6px;">Mudar cor: ${botoesCorHtml(id)}</div>
+        `;
+
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: customIcon
-        }).bindPopup(
-          `<strong>${f.properties.titulo}</strong><br>
-            Data: ${new Date(f.properties.data).toLocaleString()}<br>
-            ${f.properties.descricao || ''}<br>
-            <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`
-        );
+        }).bindPopup(popupHtml);
 
         marker.addTo(mapa);
         marcadores.push(marker);
@@ -109,9 +167,15 @@
       }
     }
 
+    fetch(geojsonURL)
+      .then(res => res.json())
+      .then(data => {
+        geojsonDados = data;
+        mostrarPontos();
+      });
+
     function filtrarMes() {
-      const mes = document.getElementById('mesSelect').value;
-      mostrarPontos(mes);
+      mostrarPontos(document.getElementById('mesSelect').value);
     }
   </script>
 </div>
