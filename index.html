@@ -2,25 +2,15 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Mapa de Compromissos</title>
+  <title>Mapa com Fonte Reduzida</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  
+
   <style>
     #map {
       height: 100vh;
-    }
-
-    .custom-label {
-      font-size: 10px; /* ajuste aqui conforme necessário */
-      font-weight: bold;
-      color: red;
-      white-space: nowrap;
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 2px 4px;
-      border-radius: 4px;
     }
   </style>
 </head>
@@ -32,22 +22,22 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-  // Inicializa o mapa
-  const map = L.map('map').setView([-28.6235, -49.2705], 14); // Use a coordenada que desejar
+  // Inicializa o mapa na posição aproximada da imagem
+  const map = L.map('map').setView([-28.6290, -49.2340], 14);
 
-  // Adiciona camada de mapa base
+  // Camada base
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
   }).addTo(map);
 
-  // Adiciona marcador com rótulo pequeno
-  const marcador = L.marker([-28.6235, -49.2705], {
-    icon: L.divIcon({
-      className: 'custom-label',
-      html: '6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)',
-    })
-  }).addTo(map);
+  // Adiciona o marcador com texto e estilo direto
+  const customIcon = L.divIcon({
+    html: '<div style="font-size:10px; font-weight:bold; color:red; background-color:white; padding:2px 4px; border-radius:3px; white-space:nowrap;">6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</div>',
+    className: '', // impede sobrescrever pelo CSS do Leaflet
+  });
+
+  L.marker([-28.6290, -49.2340], { icon: customIcon }).addTo(map);
 </script>
 
 </body>
