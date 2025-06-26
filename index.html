@@ -25,19 +25,24 @@
       pointer-events: none;
       user-select: none;
       margin-left: 5px;
-      background: rgba(255,255,255,0.8);
-      padding: 1px 5px;
+      background: rgba(255,255,255,0.9);
+      padding: 1px 8px;
       border-radius: 4px;
-      max-width: 280px;
+      max-width: 360px;
       overflow: hidden;
       text-overflow: ellipsis;
       box-sizing: border-box;
       transition: font-size 0.2s, background 0.2s;
+      box-shadow: 0 0 5px #eee;
     }
     .evento-label.ativo {
-      font-size: 17px;
+      font-size: 16px;
       background: #fff6c6;
       z-index: 1000;
+    }
+    @media (max-width: 600px) {
+      .evento-label { max-width: 160px; font-size: 11px; }
+      .evento-label.ativo { font-size: 13px; }
     }
   </style>
 </head>
@@ -72,25 +77,32 @@
 
     let marcadores = [];
     let labelMarkers = [];
-    let geojsonDados;
 
     const mapa = L.map('map').setView([-28.75, -49.41], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(mapa);
 
+    // Função para pegar só a parte principal do nome
+    function nomeResumo(titulo) {
+      // Até o segundo hífen (" -"), ou até o fechamento do parênteses
+      let partes = titulo.split(" - ");
+      if (partes.length > 2) {
+        return partes.slice(0, 3).join(" - "); // até o terceiro pedaço
+      }
+      return partes[0] + (partes[1] ? " - " + partes[1] : "");
+    }
+
     function mostrarPontos() {
-      // Remove todos os marcadores antigos
       marcadores.forEach(m => mapa.removeLayer(m));
       marcadores = [];
       labelMarkers.forEach(m => mapa.removeLayer(m));
       labelMarkers = [];
       let bounds = [];
 
-      fetch(geojsonURL + '?v=' + Date.now()) // força cache bust
+      fetch(geojsonURL + '?v=' + Date.now())
         .then(res => res.json())
         .then(geojson => {
-          geojsonDados = geojson;
           const mesSelecionado = document.getElementById('mesSelect').value;
 
           geojson.features.forEach((f, idx) => {
@@ -98,12 +110,13 @@
             const lat = f.geometry.coordinates[1];
             const lng = f.geometry.coordinates[0];
             const titulo = f.properties.titulo;
+            const nomeLabel = nomeResumo(titulo);
 
             // Label customizado ao lado do pino
             const labelIcon = L.divIcon({
               className: 'evento-label',
-              html: `<span id="label-${idx}">${titulo}</span>`,
-              iconSize: [300, 22],
+              html: `<span id="label-${idx}">${nomeLabel}</span>`,
+              iconSize: [380, 22],
               iconAnchor: [-10, 20]
             });
 
@@ -128,19 +141,17 @@
 
             // Popup com destaque no label ao abrir
             marker.bindPopup(
-              `<b>${f.properties.titulo}</b><br>
+              `<b>${nomeLabel}</b><br>
               Data: ${new Date(f.properties.data).toLocaleString()}<br>
               ${f.properties.descricao ? `<pre>${f.properties.descricao}</pre>` : ''}
               <a href="${f.properties.local}" target="_blank">Abrir local no mapa</a>`
             );
 
             marker.on('popupopen', function() {
-              // Remove classe de todos os outros
               labelMarkers.forEach((m, i) => {
                 const el = document.getElementById(`label-${i}`);
                 if(el) el.classList.remove('ativo');
               });
-              // Adiciona classe de destaque neste
               const el = document.getElementById(`label-${idx}`);
               if(el) el.classList.add('ativo');
             });
