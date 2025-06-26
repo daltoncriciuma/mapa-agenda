@@ -12,7 +12,7 @@
     .evento-label {
       font-size: 13px;
       font-weight: bold;
-      color: #d32f2f;
+      color: #d32f2f; /* mesma cor do pino, pode trocar aqui */
       text-align: center;
       text-shadow: 1px 1px 3px #fff, 0 0 2px #fff;
       white-space: nowrap;
@@ -23,28 +23,7 @@
   </style>
 </head>
 <body>
-<script>
-  // Senha de acesso
-  const senha = '123';
-  let tentativas = 0;
-  function pedirSenha() {
-    const tentativa = prompt("Este mapa é restrito. Digite a senha para acessar:");
-    if (tentativa === senha) {
-      document.getElementById("conteudoMapa").style.display = "block";
-    } else {
-      tentativas++;
-      if (tentativas < 3) {
-        alert("Senha incorreta. Tente novamente.");
-        pedirSenha();
-      } else {
-        alert("Acesso bloqueado.");
-        window.location.href = "https://www.google.com";
-      }
-    }
-  }
-  window.onload = pedirSenha;
-</script>
-<div id="conteudoMapa" style="display:none;">
+<div id="conteudoMapa">
 
   <div id="filtro">
     <label>Filtrar por mês:</label>
@@ -69,10 +48,9 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // COR DO PINO (troca aqui se quiser outra cor)
+    // COR DO PINO (troca aqui para 'red', 'blue', 'green', 'orange', 'yellow', 'violet', 'grey', 'black')
     const corPino = 'red';
 
-    // Ícone do pino
     function iconePinoLeaflet(cor) {
       return L.icon({
         iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${cor}.png`,
