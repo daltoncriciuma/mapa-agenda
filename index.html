@@ -93,6 +93,7 @@
       geojsonDados.features.forEach(f => {
         if (mesSelecionado && f.properties.mes != mesSelecionado) return;
 
+        // Adiciona o marcador colorido
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: iconePinoLeaflet(corPino)
         }).bindPopup(
@@ -105,12 +106,12 @@
         marcadores.push(marker);
         bounds.push([f.geometry.coordinates[1], f.geometry.coordinates[0]]);
 
-        // Rótulo ao lado esquerdo do pino
+        // Rótulo bem ao lado esquerdo do pino!
         const labelIcon = L.divIcon({
           className: 'evento-label',
           html: resumoTitulo(f.properties.titulo),
           iconSize: [120, 16],
-          iconAnchor: [110, 22] // <- lado esquerdo e alinhado verticalmente
+          iconAnchor: [130, 22]
         });
         L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: labelIcon,
