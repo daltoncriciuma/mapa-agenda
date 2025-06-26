@@ -10,9 +10,9 @@
     #map { height: 90vh; width: 100vw; margin: 0; padding: 0;}
     #filtro { padding: 10px; background: #fff; }
     .evento-label {
-      font-size: 13px;
+      font-size: 11px; /* Diminuído */
       font-weight: bold;
-      color: #d32f2f; /* mesma cor do pino, pode trocar aqui */
+      color: #d32f2f;
       text-align: center;
       text-shadow: 1px 1px 3px #fff, 0 0 2px #fff;
       white-space: nowrap;
@@ -48,7 +48,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // COR DO PINO (troca aqui para 'red', 'blue', 'green', 'orange', 'yellow', 'violet', 'grey', 'black')
+    // COR DO PINO
     const corPino = 'red';
 
     function iconePinoLeaflet(cor) {
@@ -60,6 +60,12 @@
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
       });
+    }
+
+    // Função para pegar só o número e o primeiro nome (ex: "6130 - ROCHA")
+    function resumoTitulo(titulo) {
+      const partes = titulo.split(" ");
+      return partes.slice(0, 3).join(" ");
     }
 
     const mapa = L.map('map').setView([-28.68, -49.37], 10);
@@ -87,7 +93,6 @@
       geojsonDados.features.forEach(f => {
         if (mesSelecionado && f.properties.mes != mesSelecionado) return;
 
-        // Adiciona o marcador colorido
         const marker = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: iconePinoLeaflet(corPino)
         }).bindPopup(
@@ -100,20 +105,19 @@
         marcadores.push(marker);
         bounds.push([f.geometry.coordinates[1], f.geometry.coordinates[0]]);
 
-        // Adiciona o label acima do pino, somente o título
+        // Adiciona o label acima do pino, só número e nome
         const labelIcon = L.divIcon({
           className: 'evento-label',
-          html: f.properties.titulo,
-          iconSize: [120, 18],
-          iconAnchor: [60, 40] // Centraliza o texto acima do pino
+          html: resumoTitulo(f.properties.titulo),
+          iconSize: [120, 16],
+          iconAnchor: [60, 40]
         });
         L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
           icon: labelIcon,
-          interactive: false // não interfere no clique
+          interactive: false
         }).addTo(mapa);
       });
 
-      // Centraliza e ajusta zoom para mostrar todos os pontos encontrados
       if (bounds.length === 1) {
         mapa.setView(bounds[0], 15);
       } else if (bounds.length > 1) {
