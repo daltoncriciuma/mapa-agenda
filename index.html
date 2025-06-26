@@ -8,7 +8,13 @@
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
     #map { height: 90vh; width: 100vw; margin: 0; padding: 0;}
-    #filtro { padding: 10px; background: #fff; }
+    #filtro { padding: 10px; background: #fff; display: flex; align-items: center; }
+    #btnAtualizar {
+      margin-left: 12px; padding: 6px 14px; border: none; border-radius: 6px;
+      background: #1976d2; color: #fff; font-weight: bold; cursor: pointer;
+      font-size: 14px; transition: background 0.2s;
+    }
+    #btnAtualizar:hover { background: #1259a7; }
     .btn-cor {
       width: 20px; height: 20px; border-radius: 50%; border: 2px solid #333;
       display: inline-block; margin: 2px; cursor: pointer;
@@ -45,6 +51,7 @@
       <option value="11">Novembro</option>
       <option value="12">Dezembro</option>
     </select>
+    <button id="btnAtualizar" onclick="atualizarEventos()">Atualizar eventos</button>
   </div>
 
   <div id="map"></div>
@@ -138,7 +145,7 @@
         const customIcon = L.divIcon({
           className: '',
           html: labelHTML,
-          iconSize: [210, 41], // aumente aqui se precisar ainda mais espaço!
+          iconSize: [210, 41],
           iconAnchor: [25, 41],
         });
 
@@ -166,6 +173,13 @@
         mapa.fitBounds(bounds);
       }
     }
+
+    // Função do botão "Atualizar eventos"
+    async function atualizarEventos() {
+      // Mostra o mês filtrado atualmente
+      await mostrarPontos(document.getElementById('mesSelect').value);
+    }
+    window.atualizarEventos = atualizarEventos;
 
     fetch(geojsonURL)
       .then(res => res.json())
