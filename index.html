@@ -1,147 +1,49 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>Mapa de Compromissos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <style>
-    #map { height: 92vh; width: 100%; }
-    #topbar {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 18px 8px 12px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px #0002;
-      position: absolute;
-      margin: 12px;
-      z-index: 1000;
-      left: 50%;
-      transform: translateX(-50%);
-      top: 16px;
+function exportaAgendaComCoordenadas() {
+  var calendarioId = 'a3c407aac2505d4bbdb4c66ca99d0283219630c098987ba04692ab63a2fd329d@group.calendar.google.com';
+  var inicio = new Date();
+  var fim = new Date();
+  fim.setMonth(fim.getMonth() + 12);
+  var eventos = CalendarApp.getCalendarById(calendarioId).getEvents(inicio, fim);
+  var lista = [];
+  eventos.forEach(function(evento) {
+    var local = evento.getLocation();
+    var lat = "", lng = "";
+    if (local && local.match(/^https:\/\/goo\.gl\/maps\//)) {
+      var coords = coordenadasDeShortLink(local);
+      if (coords) { lat = coords.lat; lng = coords.lng; }
     }
-    .leaflet-top.leaflet-left { top: 88px !important; left: 10px; }
-    #atualizarPinos {
-      background: #0057b8;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 18px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor:pointer;
-      transition: background 0.2s;
-    }
-    #atualizarPinos:hover { background: #003d80; }
-    @media(max-width:600px){
-      #topbar{width:96vw;left:0;transform:none;margin:7px;}
-    }
-  </style>
-</head>
-<body>
-  <div id="topbar">
-    <button id="atualizarPinos">Atualizar pinos</button>
-    <label for="filtroMes">Filtrar por mês:</label>
-    <select id="filtroMes">
-      <option value="todos">Todos</option>
-    </select>
-  </div>
-  <div id="map"></div>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    let marcadores = [];
-    let dadosAgenda = [];
-
-    function limparMarcadores() {
-      marcadores.forEach(m => m.remove());
-      marcadores = [];
-    }
-
-    function adicionarMarcadores(filtroMes) {
-      limparMarcadores();
-      let filtrados = dadosAgenda;
-      if(filtroMes !== "todos") {
-        filtrados = dadosAgenda.filter(e => {
-          let dataStr = e.data || "";
-          let mes = "";
-          if(dataStr.includes("-")) mes = dataStr.split("-")[1];
-          else if(dataStr.includes("/")) mes = dataStr.split("/")[1];
-          return mes === filtroMes;
-        });
-      }
-      filtrados.forEach(e => {
-        if(e.latitude && e.longitude){
-          let marker = L.marker([e.latitude, e.longitude])
-            .addTo(map)
-            .bindPopup(`<b>${e.titulo || ""}</b><br>${e.data || ""}`);
-          marcadores.push(marker);
-        }
-      });
-    }
-
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+    lista.push({
+      titulo: evento.getTitle(),
+      descricao: evento.getDescription(),
+      local: local,
+      link: 'https://calendar.google.com/calendar/event?eid=' + evento.getId(),
+      data: evento.getStartTime().toISOString(),
+      latitude: lat,
+      longitude: lng
     });
+  });
+  var arquivos = DriveApp.getFilesByName('pinos.json');
+  if (arquivos.hasNext()) {
+    var antigo = arquivos.next();
+    antigo.setTrashed(true);
+  }
+  var file = DriveApp.createFile('pinos.json', JSON.stringify(lista, null, 2), MimeType.PLAIN_TEXT);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+}
 
-    const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
-      attribution: 'Tiles © Esri'
-    });
-
-    const map = L.map('map', {
-      center: [-28.626, -49.242],
-      zoom: 12,
-      layers: [osm]
-    });
-
-    const baseMaps = {
-      "Mapa": osm,
-      "Satélite": satelite
-    };
-    L.control.layers(baseMaps, null, {position: "bottomright"}).addTo(map);
-
-    function carregarPinos() {
-      fetch('pinos.json')
-        .then(resp => resp.json())
-        .then(json => {
-          dadosAgenda = json;
-          adicionarMarcadores(document.getElementById("filtroMes").value);
-        });
+// Função para pegar latitude/longitude do shortlink do Maps
+function coordenadasDeShortLink(shortUrl) {
+  try {
+    var options = { followRedirects: false, muteHttpExceptions: true };
+    var response = UrlFetchApp.fetch(shortUrl, options);
+    var headers = response.getAllHeaders();
+    var redirectUrl = headers['Location'] || headers['location'];
+    if (!redirectUrl) return null;
+    var regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    var match = regex.exec(redirectUrl);
+    if (match) {
+      return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
     }
-
-    fetch('pinos.json')
-      .then(resp => resp.json())
-      .then(json => {
-        dadosAgenda = json;
-
-        let filtroMes = document.getElementById("filtroMes");
-        const nomesMeses = {
-          "01":"Jan", "02":"Fev", "03":"Mar", "04":"Abr", "05":"Mai", "06":"Jun",
-          "07":"Jul", "08":"Ago", "09":"Set", "10":"Out", "11":"Nov", "12":"Dez"
-        };
-        for (let i = 1; i <= 12; i++) {
-          let mes = i.toString().padStart(2, "0");
-          let opt = document.createElement("option");
-          opt.value = mes;
-          opt.textContent = `${mes} (${nomesMeses[mes]})`;
-          filtroMes.appendChild(opt);
-        }
-
-        adicionarMarcadores("todos");
-
-        filtroMes.addEventListener("change", (ev)=>{
-          adicionarMarcadores(ev.target.value);
-        });
-
-        document.getElementById("atualizarPinos").onclick = carregarPinos;
-      })
-      .catch(err => {
-        alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
-      });
-  </script>
-</body>
-</html>
+  } catch (e) {}
+  return null;
+}
