@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa de Compromissos</title>
+  <title>Mapa de Compromissos - Posto Sonho Meu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- Leaflet CSS -->
@@ -29,8 +29,11 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-  // Inicializa o mapa centralizado em Sangão - SC
-  const map = L.map('map').setView([-28.6315, -49.2426], 15);
+  // Coordenadas reais do Posto Sonho Meu (ex-Posto Riviera) em Sangão/SC
+  const coordenadas = [-28.61851, -49.23477];
+
+  // Inicializa o mapa centralizado no posto
+  const map = L.map('map').setView(coordenadas, 17);
 
   // Camada base do OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -38,8 +41,8 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Marcador com texto pequeno e bem posicionado
-  const marcador = L.marker([-28.6315, -49.2426], {
+  // Marcador com rótulo em fonte reduzida
+  const marcador = L.marker(coordenadas, {
     icon: L.divIcon({
       className: '',
       html: '<div style="font-size:10px; font-weight:bold; color:red; background-color:white; padding:2px 4px; border-radius:4px; white-space:nowrap;">6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA)</div>'
