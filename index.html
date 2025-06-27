@@ -21,16 +21,16 @@
     }
     .leaflet-popup-content { font-size: 11px; }
     .custom-label .leaflet-tooltip {
-      font-size: 11px;
+      font-size: 9px; /* fonte menor */
       background: #fff;
       color: #222;
-      padding: 2px 8px;
-      border-radius: 5px;
+      padding: 1px 6px;
+      border-radius: 4px;
       font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.10);
       border: 1px solid #ddd;
       white-space: nowrap;
-      opacity: 0.97;
+      opacity: 0.96;
     }
     .leaflet-marker-icon { transform: scale(0.65); }
   </style>
@@ -106,7 +106,7 @@
           permanent: true,
           direction: 'right',
           className: 'custom-label',
-          offset: [25, 0] // Mais afastado do pino
+          offset: [11, 0] // MAIS PRÓXIMO do pino!
         });
 
         marcadores.push(marker);
