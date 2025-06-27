@@ -8,7 +8,7 @@
   <style>
     #map { height: 92vh; width: 100%; }
     .leaflet-marker-icon {
-      filter: saturate(4) brightness(1);
+      filter: saturate(2) brightness(1.1);
     }
     .marker-label {
       color: #003366;
@@ -92,7 +92,7 @@
 
         const label = L.divIcon({
           className: 'marker-label',
-          html: titulo.split(' ').slice(0, 3).join(' ')
+          html: `<span style='color:#003366;'>${titulo.split(' ').slice(0, 3).join(' ')}</span>`
         });
 
         const labelMarker = L.marker([coordinates[1], coordinates[0]], { icon: label }).addTo(map);
@@ -135,4 +135,3 @@
   </script>
 </body>
 </html>
-
