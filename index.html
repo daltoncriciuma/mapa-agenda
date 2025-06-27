@@ -1,40 +1,59 @@
-// Função para carregar o arquivo JSON e adicionar os marcadores no mapa
-function carregarGeoJSON() {
-  fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pino.json')  // Altere o caminho para o seu JSON se necessário
-    .then(response => response.json())  // Converte a resposta para JSON
-    .then(data => {
-      const map = L.map('map').setView([-28.626, -49.242], 12);  // Define o centro e zoom do mapa
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa de Compromissos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 92vh; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
 
-      // Adiciona a camada de mapa (a base do mapa)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(map);
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Função para carregar o arquivo JSON e adicionar os marcadores no mapa
+    function carregarGeoJSON() {
+      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')  // Altere o caminho para o seu JSON se necessário
+        .then(response => response.json())  // Converte a resposta para JSON
+        .then(data => {
+          const map = L.map('map').setView([-28.626, -49.242], 12);  // Define o centro e zoom do mapa
 
-      // Adiciona marcadores para cada ponto do GeoJSON
-      data.features.forEach(feature => {
-        // Cria o marcador
-        const { coordinates } = feature.geometry;
-        const { titulo, data_inicio, descricao, localizacao } = feature.properties;
+          // Adiciona a camada de mapa (a base do mapa)
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+          }).addTo(map);
 
-        const popupContent = `
-          <b>${titulo}</b><br>
-          <i>${data_inicio}</i><br>
-          <p>${descricao}</p><br>
-          <a href="${localizacao}" target="_blank">Ver localização</a>
-        `;
+          // Adiciona marcadores para cada ponto do GeoJSON
+          data.features.forEach(feature => {
+            // Cria o marcador
+            const { coordinates } = feature.geometry;
+            const { titulo, data_inicio, descricao, localizacao } = feature.properties;
 
-        // Cria o marcador e adiciona ao mapa
-        L.marker([coordinates[1], coordinates[0]])  // Latitude, Longitude invertido para o Leaflet
-          .addTo(map)
-          .bindPopup(popupContent);
-      });
-    })
-    .catch(error => {
-      console.error('Erro ao carregar o arquivo JSON:', error);
-      alert('Erro ao carregar os dados do mapa!');
-    });
-}
+            const popupContent = `
+              <b>${titulo}</b><br>
+              <i>${data_inicio}</i><br>
+              <p>${descricao}</p><br>
+              <a href="${localizacao}" target="_blank">Ver localização</a>
+            `;
 
-// Carregar o mapa quando a página for carregada
-document.addEventListener('DOMContentLoaded', carregarGeoJSON);
+            // Cria o marcador e adiciona ao mapa
+            L.marker([coordinates[1], coordinates[0]])  // Latitude, Longitude invertido para o Leaflet
+              .addTo(map)
+              .bindPopup(popupContent);
+          });
+        })
+        .catch(error => {
+          console.error('Erro ao carregar o arquivo JSON:', error);
+          alert('Erro ao carregar os dados do mapa!');
+        });
+    }
+
+    // Carregar o mapa quando a página for carregada
+    document.addEventListener('DOMContentLoaded', carregarGeoJSON);
+  </script>
+</body>
+</html>
