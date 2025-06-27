@@ -7,37 +7,21 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map { height: 92vh; width: 100%; }
-
     #filtros {
       padding: 10px;
       background: #fff;
       border-radius: 6px;
       box-shadow: 0 2px 6px #0002;
+      margin: 10px auto;
       position: absolute;
-      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
     }
-
-    .tooltip-estilo {
-      background-color: white;
-      border: 1px solid #ccc;
-      padding: 1px 4px;
-      border-radius: 3px;
-      font-size: 9px;
-      color: #333;
-      box-shadow: 0 0 1px #999;
-      white-space: nowrap;
+    @media(max-width:600px){
+      #filtros{ width: 98vw; margin: 5px; left: 50%; transform: translateX(-50%); }
     }
-
-    @media(max-width: 600px) {
-      #filtros {
-        width: 95vw;
-        font-size: 16px;
-        padding: 8px;
-      }
-    }
+    .leaflet-popup-content { font-size: 10px; }
   </style>
 </head>
 <body>
@@ -51,73 +35,76 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    let geojsonLayer;
-    const map = L.map('map').setView([-28.626, -49.242], 9);
+    let marcadores = [];
+    let dadosGeo = [];
+    let map = L.map('map').setView([-28.67, -49.3], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    const nomesMeses = {
-      "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
-      "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
-      "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
-    };
-
-    const filtroMes = document.getElementById("filtroMes");
-    for (let i = 1; i <= 12; i++) {
-      const num = i.toString().padStart(2, "0");
-      const nome = nomesMeses[num];
-      const opt = document.createElement("option");
-      opt.value = num;
-      opt.textContent = `${num} - ${nome}`;
-      filtroMes.appendChild(opt);
+    function limparMarcadores() {
+      marcadores.forEach(m => m.remove());
+      marcadores = [];
     }
 
-    fetch('pinos.json')
-      .then(resp => resp.json())
-      .then(geojson => {
-        function atualizarMarcadores(mesSelecionado) {
-          if (geojsonLayer) geojsonLayer.remove();
-          const filtrados = geojson.features.filter(f => {
-            const mes = f.properties.data_inicio?.split("-")[1];
-            return mesSelecionado === "todos" || mes === mesSelecionado;
+    function adicionarMarcadores(filtroMes) {
+      limparMarcadores();
+      let coordenadasSet = new Set();
+      let filtrados = filtroMes === "todos"
+        ? dadosGeo.features
+        : dadosGeo.features.filter(e => {
+            let data = e.properties.data_inicio || "";
+            let mes = data.includes("-") ? data.split("-")[1] : "";
+            return mes === filtroMes;
           });
-          geojsonLayer = L.geoJSON({ type: "FeatureCollection", features: filtrados }, {
-            onEachFeature: function (feature, layer) {
-              const p = feature.properties;
-              const titulo = p.titulo || "";
-              const partes = titulo.split("-");
-              const textoCurto = partes.length >= 2
-                ? `${partes[0].trim()} - ${partes[1].trim()}`
-                : titulo;
 
-              layer.bindPopup(`
-                <b>${p.titulo}</b><br/>
-                ${p.data_inicio}<br/>
-                <a href="${p.localizacao}" target="_blank">Abrir localização</a>
-              `);
+      filtrados.forEach(f => {
+        let props = f.properties;
+        let coords = f.geometry.coordinates;
+        if (!coords || coords.length !== 2) return;
 
-              layer.bindTooltip(textoCurto, {
-                permanent: true,
-                direction: "right",
-                offset: [10, 0],
-                className: "tooltip-estilo"
-              });
-            }
-          }).addTo(map);
+        let lat = coords[1];
+        let lng = coords[0];
+
+        let chaveCoord = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+        if (coordenadasSet.has(chaveCoord)) {
+          console.warn("Ponto duplicado (sobreposto):", props.titulo);
+        } else {
+          coordenadasSet.add(chaveCoord);
         }
 
-        atualizarMarcadores("todos");
-
-        filtroMes.addEventListener("change", e => {
-          atualizarMarcadores(e.target.value);
-        });
-      })
-      .catch(err => {
-        alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
-        console.error(err);
+        let textoPopup = `<b>${props.titulo}</b><br>${props.data_inicio || ""}`;
+        let marker = L.marker([lat, lng]).addTo(map).bindPopup(textoPopup);
+        marcadores.push(marker);
       });
+
+      console.log(`Total de pinos desenhados: ${marcadores.length}`);
+    }
+
+    fetch("pinos.json")
+      .then(resp => resp.json())
+      .then(json => {
+        dadosGeo = json;
+
+        const filtro = document.getElementById("filtroMes");
+        const nomesMeses = {
+          "01":"Janeiro", "02":"Fevereiro", "03":"Março", "04":"Abril", "05":"Maio", "06":"Junho",
+          "07":"Julho", "08":"Agosto", "09":"Setembro", "10":"Outubro", "11":"Novembro", "12":"Dezembro"
+        };
+
+        for (let i = 1; i <= 12; i++) {
+          let mes = i.toString().padStart(2, "0");
+          let opt = document.createElement("option");
+          opt.value = mes;
+          opt.textContent = `${mes} - ${nomesMeses[mes]}`;
+          filtro.appendChild(opt);
+        }
+
+        adicionarMarcadores("todos");
+        filtro.addEventListener("change", ev => adicionarMarcadores(ev.target.value));
+      })
+      .catch(err => alert("Erro ao carregar pinos.json!\n\n" + err));
   </script>
 </body>
 </html>
