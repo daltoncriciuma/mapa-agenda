@@ -7,23 +7,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map { height: 92vh; width: 100%; }
-    .custom-label {
-      background: white;
-      padding: 2px 7px;
-      border-radius: 9px;
-      box-shadow: 0 0 4px #0002;
-      font-size: 12px;
-      margin-left: 8px;
-      position: relative;
-      top: -4px;
-      display: inline-block;
-      font-family: 'Arial',sans-serif;
-    }
-    .leaflet-marker-icon.custom-pin {
-      filter: hue-rotate(-20deg) saturate(2) brightness(0.95);
-      width: 24px !important;
-      height: 32px !important;
-    }
   </style>
 </head>
 <body>
@@ -31,88 +14,46 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Camada satélite padrão + camada mapa
-    const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri, DigitalGlobe'
-    });
-    const mapa = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    });
+    // Função para carregar o arquivo JSON e adicionar os marcadores no mapa
+    function carregarGeoJSON() {
+      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')  // Altere o caminho para o seu JSON se necessário
+        .then(response => response.json())  // Converte a resposta para JSON
+        .then(data => {
+          const map = L.map('map').setView([-28.626, -49.242], 12);  // Define o centro e zoom do mapa
 
-    // Cria o mapa
-    const map = L.map('map', {
-      center: [-28.626, -49.242],
-      zoom: 11,
-      layers: [satelite] // Satélite padrão
-    });
+          // Adiciona a camada de mapa (a base do mapa)
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+          }).addTo(map);
 
-    // Botão de troca de camada no canto inferior direito
-    L.control.layers(
-      { "Mapa": mapa, "Satélite": satelite }, // ordem: mapa, satélite
-      null,
-      { position: "bottomright" }
-    ).addTo(map);
+          // Adiciona marcadores para cada ponto do GeoJSON
+          data.features.forEach(feature => {
+            // Cria o marcador
+            const { coordinates } = feature.geometry;
+            const { titulo, data_inicio, descricao, localizacao } = feature.properties;
 
-    // Função de carregar pinos do GeoJSON
-    fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
-      .then(response => response.json())
-      .then(data => {
-        data.features.forEach(feature => {
-          const { coordinates } = feature.geometry;
-          const { titulo, data_inicio, descricao, localizacao } = feature.properties;
+            const popupContent = `
+              <b>${titulo}</b><br>
+              <i>${data_inicio}</i><br>
+              <p>${descricao}</p><br>
+              <a href="${localizacao}" target="_blank">Ver localização</a>
+            `;
 
-          // Cria pino vermelho customizado (Leaflet padrão, mas menor)
-          const markerIcon = L.icon({
-            iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-            iconSize: [22, 32],
-            iconAnchor: [11, 32],
-            popupAnchor: [1, -30]
+            // Cria o marcador e adiciona ao mapa
+            L.marker([coordinates[1], coordinates[0]])  // Latitude, Longitude invertido para o Leaflet
+              .addTo(map)
+              .bindPopup(popupContent);
           });
-
-          // Label ao lado do pino
-          const nomesSplit = titulo.trim().split(" ");
-          let code = nomesSplit[0] || '';
-          let nome1 = nomesSplit[1] || '';
-          let nome2 = nomesSplit[2] || '';
-          const labelText = `<span class="custom-label">${code} ${nome1} ${nome2}</span>`;
-
-          // Marker + label
-          const marker = L.marker([coordinates[1], coordinates[0]], { icon: markerIcon })
-            .addTo(map);
-
-          // Adiciona o nome ao lado do pino com tarja branca, afastado
-          marker.bindTooltip(labelText, {
-            permanent: true,
-            direction: "right",
-            offset: [8, -10],
-            className: "custom-label"
-          }).openTooltip();
-
-          // Popup completo ao clicar
-          marker.bindPopup(`
-            <b>${titulo}</b><br>
-            <i>${formatarData(data_inicio)}</i><br>
-            <pre style="white-space:pre-wrap; font-size:12px; font-family:inherit; margin:0 0 5px 0;">${descricao}</pre>
-            <input style="width:95%; font-size:12px;" type="text" value="${localizacao}" readonly onclick="this.select()" /><br>
-            <a href="${localizacao}" target="_blank">Abrir no mapa</a>
-          `);
+        })
+        .catch(error => {
+          console.error('Erro ao carregar o arquivo JSON:', error);
+          alert('Erro ao carregar os dados do mapa!');
         });
-      })
-      .catch(error => {
-        console.error('Erro ao carregar o arquivo JSON:', error);
-        alert('Erro ao carregar os dados do mapa!');
-      });
-
-    // Função para formatar data para dd/mm/yy
-    function formatarData(isoString) {
-      if (!isoString) return "";
-      const data = new Date(isoString);
-      if (isNaN(data)) return isoString;
-      const dia = ("0" + data.getDate()).slice(-2);
-      const mes = ("0" + (data.getMonth() + 1)).slice(-2);
-      const ano = String(data.getFullYear()).slice(-2);
-      return `${dia}/${mes}/${ano}`;
     }
+
+    // Carregar o mapa quando a página for carregada
+    document.addEventListener('DOMContentLoaded', carregarGeoJSON);
   </script>
 </body>
 </html>
