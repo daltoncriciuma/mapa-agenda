@@ -7,14 +7,11 @@
         "titulo": "2653 - ROCHA ALIMENTOS - SANGÃO/DANIEL",
         "data_inicio": "2025-03-07 08:00",
         "descricao": "...",
-        "localizacao": " https://goo.gl/maps/z4UPvNeZhXG7ohE48"
+        "localizacao": "https://goo.gl/maps/z4UPvNeZhXG7ohE48"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -491.235351,
-          -28.627243
-        ]
+        "coordinates": [-49.123535, -28.627243]
       }
     },
     {
@@ -27,10 +24,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -493.423926,
-          -28.6376427
-        ]
+        "coordinates": [-49.342392, -28.637642]
       }
     },
     {
@@ -43,10 +37,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -494.315832,
-          -28.7028473
-        ]
+        "coordinates": [-49.431583, -28.702847]
       }
     },
     {
@@ -59,10 +50,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -497.615738,
-          -28.697382
-        ]
+        "coordinates": [-49.761573, -28.697382]
       }
     },
     {
@@ -75,10 +63,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -493.48762,
-          -28.6915353
-        ]
+        "coordinates": [-49.348762, -28.691535]
       }
     },
     {
@@ -91,10 +76,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -494.12225,
-          -28.7503912
-        ]
+        "coordinates": [-49.412225, -28.750391]
       }
     },
     {
@@ -107,26 +89,20 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -493.103752,
-          -28.8149929
-        ]
+        "coordinates": [-49.310375, -28.814993]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA) - CRICIUMA - ENG. EDUARDO PADOIN ",
+        "titulo": "6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA) - CRICIUMA - ENG. EDUARDO PADOIN",
         "data_inicio": "2025-10-01 08:00",
         "descricao": "...",
         "localizacao": "https://goo.gl/maps/k3sUBSBU2ga1uUos6"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -494.12225,
-          -28.7503912
-        ]
+        "coordinates": [-49.412225, -28.750391]
       }
     },
     {
@@ -135,14 +111,11 @@
         "titulo": "DATA FIXA - 2184 - POSTO AROLDO SOBRINHO - CRICIÚMA - G. GISLAINE/LÉO GERENTE",
         "data_inicio": "2025-11-03 09:15",
         "descricao": "...",
-        "localizacao": " https://goo.gl/maps/YydY4V9B7nAxb2Rp8"
+        "localizacao": "https://goo.gl/maps/YydY4V9B7nAxb2Rp8"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [
-          -494.315832,
-          -28.7028473
-        ]
+        "coordinates": [-49.431583, -28.702847]
       }
     }
   ]
