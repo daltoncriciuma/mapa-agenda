@@ -1,102 +1,178 @@
-<select id="filtroMes">
-  <option value="">Todos os meses</option>
-</select>
-<div id="map"></div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: '&copy; Esri, DigitalGlobe'
-});
-const mapa = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-});
-const map = L.map('map', {
-  center: [-28.626, -49.242],
-  zoom: 11,
-  layers: [satelite]
-});
-L.control.layers({ "Mapa": mapa, "Satélite": satelite }, null, { position: "bottomright" }).addTo(map);
-
-let allMarkers = [];
-
-function filtrarPorMes(mes) {
-  allMarkers.forEach(obj => {
-    const dt = obj.data_inicio ? new Date(obj.data_inicio) : null;
-    if (!mes || !dt || dt.getMonth() + 1 == mes) {
-      obj.marker.addTo(map);
-      obj.marker._icon && (obj.marker._icon.style.display = "");
-    } else {
-      map.removeLayer(obj.marker);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa de Compromissos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
     }
-  });
-}
+    #map {
+      height: 100vh;
+      width: 100vw;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    #filtroMes {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      background: white;
+      border-radius: 8px;
+      padding: 5px 22px;
+      box-shadow: 0 1px 7px #0002;
+      font-size: 17px;
+      font-family: Arial;
+      border: 1px solid #eee;
+    }
+    .pin-label {
+      background: white;
+      color: #d72646;
+      font-size: 12px;
+      font-family: Arial;
+      border-radius: 4px;
+      padding: 1px 8px;
+      margin-left: 6px;
+      box-shadow: 0 0 5px #0001;
+      border: 1px solid #ddd;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <select id="filtroMes"><option value="">Todos os meses</option></select>
+  <div id="map"></div>
 
-fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
-  .then(response => response.json())
-  .then(data => {
-    // Gera meses únicos
-    const meses = new Set();
-    data.features.forEach(feature => {
-      const dt = feature.properties.data_inicio ? new Date(feature.properties.data_inicio) : null;
-      if (dt && !isNaN(dt)) meses.add(`${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`);
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Ícone vermelho menor
+    const redIcon = new L.Icon({
+      iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon-2x-red.png',
+      iconSize: [25, 38],
+      iconAnchor: [12, 38],
+      popupAnchor: [2, -36],
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      shadowSize: [41, 41],
+      shadowAnchor: [13, 41]
     });
 
-    // Popular filtro meses
-    const filtro = document.getElementById('filtroMes');
-    Array.from(meses).sort().forEach(m => {
-      const [mes, ano] = m.split('/');
-      filtro.innerHTML += `<option value="${mes}">${mes}/${ano}</option>`;
-    });
+    // Filtro de mês centralizado
+    const filtroMes = document.getElementById('filtroMes');
+    let allFeatures = [];
 
-    // Cria pinos vermelhos + labels
-    data.features.forEach(feature => {
-      const { coordinates } = feature.geometry;
-      const { titulo, data_inicio, descricao, localizacao } = feature.properties;
-      const markerIcon = L.icon({
-        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-        iconSize: [22, 32],
-        iconAnchor: [11, 32],
-        popupAnchor: [1, -30]
+    function getMes(dataStr) {
+      // Extrai mês e ano para filtro: '2025-06-25 08:30' → '2025-06'
+      return dataStr ? dataStr.substr(0, 7) : '';
+    }
+
+    function getLabel(titulo) {
+      // Exibe só código + dois primeiros nomes
+      if (!titulo) return '';
+      let parts = titulo.replace(/\s+/g, ' ').trim().split(' ');
+      return parts.slice(0, 3).join(' ');
+    }
+
+    function formatarData(dataStr) {
+      // '2025-06-25 08:30' ou '2025-06-25T08:30:00.000Z' → '25/06/25'
+      if (!dataStr) return '';
+      let d = dataStr.split(/[T ]/)[0].split('-');
+      return d.length === 3 ? `${d[2]}/${d[1]}/${d[0].slice(2)}` : dataStr;
+    }
+
+    // Carregar o arquivo JSON e adicionar os marcadores no mapa
+    function carregarGeoJSON() {
+      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
+        .then(response => response.json())
+        .then(data => {
+          allFeatures = data.features || [];
+
+          // Preenche opções de filtro por mês
+          let meses = Array.from(new Set(allFeatures.map(f => getMes(f.properties.data_inicio)).filter(Boolean)));
+          meses.sort();
+          filtroMes.innerHTML = `<option value="">Todos os meses</option>` +
+            meses.map(m => {
+              let [ano, mes] = m.split('-');
+              return `<option value="${m}">${mes}/${ano.slice(2)}</option>`;
+            }).join('');
+
+          desenharMapa();
+        })
+        .catch(error => {
+          console.error('Erro ao carregar o arquivo JSON:', error);
+          alert('Erro ao carregar os dados do mapa!');
+        });
+    }
+
+    function desenharMapa() {
+      document.getElementById('map').innerHTML = ''; // Limpa mapa para redibuixar se trocar filtro
+
+      // Define centro padrão e zoom
+      const map = L.map('map', { zoomControl: true }).setView([-28.67, -49.36], 11);
+
+      // Satélite Mapbox como base
+      L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ._K42eQpY1QlMYmIlmHb0ug', {
+        attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Filtro por mês
+      const mesSelecionado = filtroMes.value;
+      const filtrados = mesSelecionado
+        ? allFeatures.filter(f => getMes(f.properties.data_inicio) === mesSelecionado)
+        : allFeatures;
+
+      // Adiciona marcadores
+      filtrados.forEach(feature => {
+        const { coordinates } = feature.geometry;
+        const { titulo, data_inicio, descricao, localizacao } = feature.properties;
+        if (!coordinates || coordinates.length !== 2) return;
+
+        // Popup completo
+        const popupContent = `
+          <b>${titulo}</b><br>
+          <b>Data:</b> ${formatarData(data_inicio)}<br>
+          <pre style="font-family:inherit;font-size:13px;white-space:pre-line;">${descricao || ''}</pre>
+          <div>
+            <input style="width:80%;" value="${localizacao}" readonly onclick="this.select();" />
+            <a href="${localizacao}" target="_blank" style="margin-left:7px;">Abrir</a>
+          </div>
+        `;
+
+        // Cria pino
+        const marker = L.marker([coordinates[1], coordinates[0]], { icon: redIcon })
+          .addTo(map)
+          .bindPopup(popupContent);
+
+        // Adiciona nome ao lado do pino
+        const label = L.divIcon({
+          className: 'pin-label',
+          html: getLabel(titulo),
+          iconAnchor: [-15, 18]
+        });
+        L.marker([coordinates[1], coordinates[0]], { icon: label, interactive: false }).addTo(map);
       });
-      // Nome ao lado do pino
-      const nomesSplit = (titulo || "").trim().split(" ");
-      const code = nomesSplit[0] || '';
-      const nome1 = nomesSplit[1] || '';
-      const nome2 = nomesSplit[2] || '';
-      const labelText = `<span>${code} ${nome1} ${nome2}</span>`;
-      const marker = L.marker([coordinates[1], coordinates[0]], { icon: markerIcon }).addTo(map);
-      marker.bindTooltip(labelText, {
-        permanent: true,
-        direction: "right",
-        offset: [15, -5],
-        className: "custom-label"
-      }).openTooltip();
 
-      marker.bindPopup(`
-        <b>${titulo}</b><br>
-        <i>${formatarData(data_inicio)}</i><br>
-        <pre style="white-space:pre-wrap; font-size:12px; font-family:inherit; margin:0 0 5px 0;">${descricao}</pre>
-        <input style="width:95%; font-size:12px;" type="text" value="${localizacao}" readonly onclick="this.select()" /><br>
-        <a href="${localizacao}" target="_blank">Abrir no mapa</a>
-      `);
+      // Centraliza no conjunto de pontos do filtro
+      if (filtrados.length) {
+        let lats = filtrados.map(f => f.geometry.coordinates[1]);
+        let lngs = filtrados.map(f => f.geometry.coordinates[0]);
+        let latMin = Math.min(...lats), latMax = Math.max(...lats);
+        let lngMin = Math.min(...lngs), lngMax = Math.max(...lngs);
+        map.fitBounds([[latMin, lngMin], [latMax, lngMax]], { padding: [30, 30] });
+      }
+    }
 
-      allMarkers.push({ marker, data_inicio });
-    });
-
-    filtro.onchange = () => {
-      const mes = filtro.value;
-      filtrarPorMes(mes);
-    };
-  });
-
-function formatarData(isoString) {
-  if (!isoString) return "";
-  const data = new Date(isoString);
-  if (isNaN(data)) return isoString;
-  const dia = ("0" + data.getDate()).slice(-2);
-  const mes = ("0" + (data.getMonth() + 1)).slice(-2);
-  const ano = String(data.getFullYear()).slice(-2);
-  return `${dia}/${mes}/${ano}`;
-}
-</script>
+    filtroMes.addEventListener('change', desenharMapa);
+    document.addEventListener('DOMContentLoaded', carregarGeoJSON);
+  </script>
+</body>
+</html>
