@@ -20,6 +20,16 @@
       z-index: 1000;
     }
 
+    .tooltip-estilo {
+      background-color: #fff;
+      border: 1px solid #999;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #000;
+      box-shadow: 1px 1px 3px #0002;
+    }
+
     @media(max-width: 600px) {
       #filtros {
         width: 95vw;
@@ -75,11 +85,24 @@
           geojsonLayer = L.geoJSON({ type: "FeatureCollection", features: filtrados }, {
             onEachFeature: function (feature, layer) {
               const p = feature.properties;
+              const titulo = p.titulo || "";
+              const partes = titulo.split("-");
+              const textoCurto = partes.length >= 2
+                ? `${partes[0].trim()} - ${partes[1].trim()}`
+                : titulo;
+
               layer.bindPopup(`
                 <b>${p.titulo}</b><br/>
                 ${p.data_inicio}<br/>
                 <a href="${p.localizacao}" target="_blank">Abrir localização</a>
               `);
+
+              layer.bindTooltip(textoCurto, {
+                permanent: true,
+                direction: "right",
+                offset: [10, 0],
+                className: "tooltip-estilo"
+              });
             }
           }).addTo(map);
         }
