@@ -6,20 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    #map {
-      height: 100vh;
-      width: 100vw;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
-    }
+    html, body {height: 100%; margin: 0; padding: 0; background: #e1e1e1;}
+    #map { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 1;}
     #filtroMes {
       position: fixed;
       top: 18px;
@@ -35,16 +23,13 @@
       border: 1px solid #eee;
     }
     .pin-label {
-      background: white;
       color: #d72646;
-      font-size: 12px;
+      font-size: 13px;
       font-family: Arial;
-      border-radius: 4px;
-      padding: 1px 8px;
-      margin-left: 6px;
-      box-shadow: 0 0 5px #0001;
-      border: 1px solid #ddd;
-      pointer-events: none;
+      background: none;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #fff;
+      margin-left: 12px;
     }
   </style>
 </head>
@@ -54,12 +39,12 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Ícone vermelho menor
+    // Pino vermelho (tamanho menor)
     const redIcon = new L.Icon({
-      iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon-2x-red.png',
-      iconSize: [25, 38],
+      iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
+      iconSize: [24, 38],
       iconAnchor: [12, 38],
-      popupAnchor: [2, -36],
+      popupAnchor: [2, -38],
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       shadowSize: [41, 41],
       shadowAnchor: [13, 41]
@@ -70,32 +55,27 @@
     let allFeatures = [];
 
     function getMes(dataStr) {
-      // Extrai mês e ano para filtro: '2025-06-25 08:30' → '2025-06'
-      return dataStr ? dataStr.substr(0, 7) : '';
+      if (!dataStr) return '';
+      return dataStr.substr(0, 7);
     }
 
     function getLabel(titulo) {
-      // Exibe só código + dois primeiros nomes
       if (!titulo) return '';
       let parts = titulo.replace(/\s+/g, ' ').trim().split(' ');
       return parts.slice(0, 3).join(' ');
     }
 
     function formatarData(dataStr) {
-      // '2025-06-25 08:30' ou '2025-06-25T08:30:00.000Z' → '25/06/25'
       if (!dataStr) return '';
       let d = dataStr.split(/[T ]/)[0].split('-');
       return d.length === 3 ? `${d[2]}/${d[1]}/${d[0].slice(2)}` : dataStr;
     }
 
-    // Carregar o arquivo JSON e adicionar os marcadores no mapa
     function carregarGeoJSON() {
       fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
         .then(response => response.json())
         .then(data => {
           allFeatures = data.features || [];
-
-          // Preenche opções de filtro por mês
           let meses = Array.from(new Set(allFeatures.map(f => getMes(f.properties.data_inicio)).filter(Boolean)));
           meses.sort();
           filtroMes.innerHTML = `<option value="">Todos os meses</option>` +
@@ -103,7 +83,6 @@
               let [ano, mes] = m.split('-');
               return `<option value="${m}">${mes}/${ano.slice(2)}</option>`;
             }).join('');
-
           desenharMapa();
         })
         .catch(error => {
@@ -113,30 +92,25 @@
     }
 
     function desenharMapa() {
-      document.getElementById('map').innerHTML = ''; // Limpa mapa para redibuixar se trocar filtro
+      document.getElementById('map').innerHTML = '';
+      const map = L.map('map', { zoomControl: true }).setView([-28.67, -49.36], 10);
 
-      // Define centro padrão e zoom
-      const map = L.map('map', { zoomControl: true }).setView([-28.67, -49.36], 11);
-
-      // Satélite Mapbox como base
-      L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ._K42eQpY1QlMYmIlmHb0ug', {
-        attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+      // Troque a linha abaixo para satélite de outro provedor se desejar
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(map);
 
-      // Filtro por mês
       const mesSelecionado = filtroMes.value;
       const filtrados = mesSelecionado
         ? allFeatures.filter(f => getMes(f.properties.data_inicio) === mesSelecionado)
         : allFeatures;
 
-      // Adiciona marcadores
       filtrados.forEach(feature => {
         const { coordinates } = feature.geometry;
         const { titulo, data_inicio, descricao, localizacao } = feature.properties;
         if (!coordinates || coordinates.length !== 2) return;
 
-        // Popup completo
         const popupContent = `
           <b>${titulo}</b><br>
           <b>Data:</b> ${formatarData(data_inicio)}<br>
@@ -147,27 +121,27 @@
           </div>
         `;
 
-        // Cria pino
         const marker = L.marker([coordinates[1], coordinates[0]], { icon: redIcon })
           .addTo(map)
           .bindPopup(popupContent);
 
-        // Adiciona nome ao lado do pino
+        // Nome ao lado do pino
         const label = L.divIcon({
           className: 'pin-label',
           html: getLabel(titulo),
-          iconAnchor: [-15, 18]
+          iconSize: null,
+          iconAnchor: [-14, 15]
         });
         L.marker([coordinates[1], coordinates[0]], { icon: label, interactive: false }).addTo(map);
       });
 
-      // Centraliza no conjunto de pontos do filtro
+      // Centralizar
       if (filtrados.length) {
         let lats = filtrados.map(f => f.geometry.coordinates[1]);
         let lngs = filtrados.map(f => f.geometry.coordinates[0]);
         let latMin = Math.min(...lats), latMax = Math.max(...lats);
         let lngMin = Math.min(...lngs), lngMax = Math.max(...lngs);
-        map.fitBounds([[latMin, lngMin], [latMax, lngMax]], { padding: [30, 30] });
+        map.fitBounds([[latMin, lngMin], [latMax, lngMax]], { padding: [50, 50] });
       }
     }
 
