@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Mapa de Compromissos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     #map { height: 95vh; width: 100%; }
     .filtro-container {
@@ -19,29 +19,26 @@
       font-size: 14px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    .leaflet-marker-icon {
-      transform: scale(0.7);
-    }
-    .custom-label {
-      font-size: 9px;
-      background-color: white;
-      color: #222;
-      padding: 1px 3px;
-      border-radius: 3px;
-      white-space: nowrap;
-      margin-left: 2px;
-      font-weight: bold;
-      box-shadow: 0 0 2px #0003;
-    }
-    .leaflet-popup-content {
+    .leaflet-popup-content { font-size: 11px; }
+    .custom-label .leaflet-tooltip {
       font-size: 11px;
+      background: #fff;
+      color: #222;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      border: 1px solid #ddd;
+      white-space: nowrap;
+      opacity: 0.97;
     }
+    .leaflet-marker-icon { transform: scale(0.65); }
   </style>
 </head>
 <body>
   <div class="filtro-container">
     <label for="mes">Filtrar por mês:</label>
-    <select id="mes" onchange="filtrarMes()">
+    <select id="mes">
       <option value="Todos">Todos</option>
       <option value="01">01 - Janeiro</option>
       <option value="02">02 - Fevereiro</option>
@@ -58,7 +55,7 @@
     </select>
   </div>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const mapa = L.map('map').setView([-28.68, -49.37], 9);
 
@@ -66,40 +63,34 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(mapa);
 
+    let todosPinos = [];
     let marcadores = [];
 
-    async function carregarGeoJSON() {
-      const resposta = await fetch('pinos.json');
-      const dados = await resposta.json();
-      adicionarPontos(dados.features);
+    function formatarLabel(titulo) {
+      let partes = titulo.split("-");
+      let codigo = (partes[0] || '').trim();
+      let nome = (partes[1] || '').trim().split(' ');
+      return `${codigo} - ${nome[0] || ''} ${nome[1] || ''}`.trim();
     }
 
-    function adicionarPontos(pontos) {
+    function carregarPinos(mesFiltro) {
       marcadores.forEach(m => mapa.removeLayer(m));
       marcadores = [];
-
-      const mesSelecionado = document.getElementById('mes').value;
       let bounds = [];
 
-      pontos.forEach(ponto => {
+      todosPinos.forEach(ponto => {
         const props = ponto.properties;
+        const coords = ponto.geometry.coordinates;
         const data = props.data_inicio || props.inicio || "";
         const mes = data ? (data.split('-')[1] || "01") : "01";
 
-        if (mesSelecionado !== "Todos" && mes !== mesSelecionado) return;
+        if (mesFiltro !== "Todos" && mes !== mesFiltro) return;
 
-        const latlng = [ponto.geometry.coordinates[1], ponto.geometry.coordinates[0]];
+        if (!coords || coords.length !== 2) return;
+        let latlng = [coords[1], coords[0]];
+        bounds.push(latlng);
 
-        // Nome ao lado do pino: código + primeiro e segundo nome
-        let titulo = props.titulo || "";
-        let partes = titulo.split("-");
-        let codigo = (partes[0] || '').trim();
-        let nome = (partes[1] || '').trim();
-        let nomes = nome.split(' ').filter(Boolean);
-        let nomeCurto = `${codigo} - ${(nomes[0] || '')} ${(nomes[1] || '')}`.trim();
-
-        // Pino vermelho pequeno
-        const pino = L.marker(latlng, {
+        let marker = L.marker(latlng, {
           icon: L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
             iconSize: [18, 29],
@@ -108,34 +99,33 @@
           })
         }).addTo(mapa);
 
-        // Popup completo
-        const popup = `<strong>${props.titulo}</strong><br>${data}<br>${props.descricao || ''}<br><a href="${props.localizacao || props.link || '#'}" target="_blank">Ver localização</a>`;
-        pino.bindPopup(popup);
+        let popup = `<strong>${props.titulo}</strong><br>${data}<br>${props.descricao || ''}<br><a href="${props.localizacao || props.link || '#'}" target="_blank">Ver localização</a>`;
+        marker.bindPopup(popup);
 
-        // Nome ao lado
-        const label = L.marker(latlng, {
-          icon: L.divIcon({
-            className: 'custom-label',
-            html: nomeCurto,
-            iconAnchor: [-2, 15] // bem próximo do pino, ajuste aqui se quiser mais perto ou mais longe
-          })
-        }).addTo(mapa);
+        marker.bindTooltip(formatarLabel(props.titulo), {
+          permanent: true,
+          direction: 'right',
+          className: 'custom-label',
+          offset: [25, 0] // Mais afastado do pino
+        });
 
-        marcadores.push(pino, label);
-        bounds.push(latlng);
+        marcadores.push(marker);
       });
 
-      // Centraliza o mapa nos pinos filtrados
-      if (bounds.length > 0) {
-        mapa.fitBounds(bounds, { padding: [50, 50] });
+      if(bounds.length > 0) {
+        mapa.fitBounds(bounds, { padding: [40, 40] });
       }
     }
 
-    function filtrarMes() {
-      carregarGeoJSON();
-    }
-
-    carregarGeoJSON();
+    fetch('pinos.json')
+      .then(resp => resp.json())
+      .then(geojson => {
+        todosPinos = geojson.features;
+        document.getElementById('mes').addEventListener('change', e => {
+          carregarPinos(e.target.value);
+        });
+        carregarPinos(document.getElementById('mes').value);
+      });
   </script>
 </body>
 </html>
