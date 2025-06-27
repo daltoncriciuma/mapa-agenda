@@ -21,20 +21,21 @@
     }
     .leaflet-popup-content { font-size: 11px; }
     .custom-label .leaflet-tooltip {
-      font-size: 9px;
+      font-size: 8px !important;   /* Força fonte menor */
       background: #fff;
       color: #222;
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: normal;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
       border: 1px solid #ddd;
       white-space: nowrap;
       opacity: 0.96;
+      line-height: 1.2;
     }
     .leaflet-marker-icon { transform: scale(0.65); }
     .leaflet-control-layers {
-      margin-bottom: 25px !important; /* Afasta do canto inferior */
+      margin-bottom: 25px !important;
     }
   </style>
 </head>
@@ -64,27 +65,21 @@
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     });
-
-    // Satélite (Esri)
     const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, etc'
     });
 
-    // Mapa
     const mapa = L.map('map', {
       center: [-28.68, -49.37],
       zoom: 9,
       layers: [osm]
     });
 
-    // Controle de camadas (base layers)
-    const baseLayers = {
-      "Mapa": osm,
-      "Satélite": esriSat
-    };
-
-    // Adiciona controle no canto inferior direito
-    L.control.layers(baseLayers, null, { position: 'bottomright', collapsed: false }).addTo(mapa);
+    L.control.layers(
+      { "Mapa": osm, "Satélite": esriSat }, 
+      null, 
+      { position: 'bottomright', collapsed: false }
+    ).addTo(mapa);
 
     let todosPinos = [];
     let marcadores = [];
@@ -106,9 +101,7 @@
         const coords = ponto.geometry.coordinates;
         const data = props.data_inicio || props.inicio || "";
         const mes = data ? (data.split('-')[1] || "01") : "01";
-
         if (mesFiltro !== "Todos" && mes !== mesFiltro) return;
-
         if (!coords || coords.length !== 2) return;
         let latlng = [coords[1], coords[0]];
         bounds.push(latlng);
@@ -129,7 +122,7 @@
           permanent: true,
           direction: 'right',
           className: 'custom-label',
-          offset: [11, 0] // Próximo do pino!
+          offset: [11, 0]
         });
 
         marcadores.push(marker);
@@ -152,3 +145,4 @@
   </script>
 </body>
 </html>
+
