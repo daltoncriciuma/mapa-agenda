@@ -58,7 +58,7 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    fetch('pinos.json')
+    fetch('MapaAgenda.json')
       .then(resp => resp.json())
       .then(json => {
         dadosAgenda = json;
@@ -83,7 +83,7 @@
         });
       })
       .catch(err => {
-        alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
+        alert("Erro ao carregar MapaAgenda.json!\n\nDetalhe: " + err);
       });
   </script>
 </body>
