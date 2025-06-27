@@ -113,11 +113,11 @@
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, etc'
     });
 
-    // Satélite como padrão
+    // Mapa como padrão
     const mapa = L.map('map', {
       center: [-28.68, -49.37],
       zoom: 9,
-      layers: [esriSat]
+      layers: [osm]
     });
 
     L.control.layers(
@@ -136,13 +136,29 @@
       return `${codigo} - ${nome[0] || ''} ${nome[1] || ''}`.trim();
     }
 
-    function gerarPopupCompleto(props) {
-      let html = `<div><b>${props.titulo || ''}</b></div>`;
+    // Função para formatar data no padrão DD/MM/YY
+    function formatarData(data) {
+      if(!data) return '';
+      // tenta formato YYYY-MM-DD HH:mm ou só YYYY-MM-DD
+      let m = data.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}:\d{2}))?/);
+      if(m) {
+        let dia = m[3];
+        let mes = m[2];
+        let ano = m[1].slice(-2);
+        let hora = m[4] ? ' ' + m[4] : '';
+        return `${dia}/${mes}/${ano}${hora}`;
+      }
+      return data;
+    }
 
+    function gerarPopupCompleto(props) {
       // DATA: tenta vários campos, ordem: data_inicio, data, inicio, data_inicio_evento
-      let data = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || '';
-      if(data)
-        html += `<div class="popup-prop-label">Data:</div> <span>${data}</span><br>`;
+      let dataStr = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || '';
+      let dataFormatada = formatarData(dataStr);
+
+      let html = '';
+      if (dataFormatada) html += `<b>${dataFormatada}</b><br>`;
+      html += `<div>${props.titulo || ''}</div>`;
 
       if(props.status)
         html += `<div class="popup-prop-label">Status:</div> <span>${props.status}</span><br>`;
