@@ -1,156 +1,132 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mapa Interativo</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <meta charset="utf-8" />
+  <title>Mapa de Compromissos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
-    /* Tamanho do mapa responsivo */
-    #map { width: 100%; height: 90vh; }
+    #map { height: 94vh; width: 100%; }
+    .label-nome {
+      color: red;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .leaflet-top.leaflet-left {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .leaflet-control-container .leaflet-top {
+      pointer-events: none;
+    }
+    #mesFiltro {
+      pointer-events: auto;
+      font-size: 14px;
+      padding: 4px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <!-- Filtro de mês centralizado -->
-  <div style="text-align:center; margin: 10px 0;">
-    <select id="monthFilter">
-      <option value="all">Todos os meses</option>
-      <option value="1">Janeiro</option>
-      <option value="2">Fevereiro</option>
-      <option value="3">Março</option>
-      <option value="4">Abril</option>
-      <option value="5">Maio</option>
-      <option value="6">Junho</option>
-      <option value="7">Julho</option>
-      <option value="8">Agosto</option>
-      <option value="9">Setembro</option>
-      <option value="10">Outubro</option>
-      <option value="11">Novembro</option>
-      <option value="12">Dezembro</option>
-    </select>
-  </div>
-
-  <!-- Contêiner do mapa -->
   <div id="map"></div>
-
-  <!-- Scripts do Leaflet e inicialização do mapa -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
-    // Cria o mapa (centralização será ajustada após carregar os dados)
-    var map = L.map('map');
+    let map;
+    let todosPontos = [];
 
-    // Camada de mapa satélite (Esri World Imagery):contentReference[oaicite:1]{index=1}
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 18,
-      attribution: '&copy; Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    }).addTo(map);
+    function carregarGeoJSON() {
+      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
+        .then(response => response.json())
+        .then(data => {
+          map = L.map('map', {
+            center: [-28.65, -49.25],
+            zoom: 9,
+            layers: [
+              L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+              })
+            ]
+          });
 
-    // Define ícone personalizado (marcador vermelho de tamanho reduzido)
-    var redIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [20, 32],
-      iconAnchor: [10, 32],
-      popupAnchor: [1, -30]
-    });
+          adicionarFiltro(data);
+          renderizarPontos(data.features);
+        })
+        .catch(error => {
+          console.error('Erro ao carregar o arquivo JSON:', error);
+          alert('Erro ao carregar os dados do mapa!');
+        });
+    }
 
-    // Camada GeoJSON para os marcadores
-    var markersLayer = L.geoJSON(null, {
-      pointToLayer: function(feature, latlng) {
-        // Usa o ícone vermelho definido acima
-        return L.marker(latlng, { icon: redIcon });
-      },
-      onEachFeature: function(feature, layer) {
-        var props = feature.properties;
-        // Conteúdo do balão (popup) com todas as informações
-        var popupContent = '<strong>' + props.titulo + '</strong><br>' +
-                           '<em>Início:</em> ' + props.data_inicio + '<br>' +
-                           '<em>Descrição:</em> ' + (props.descricao || '') + '<br>';
-        if (props.localizacao) {
-          popupContent += '<a href="' + props.localizacao + '" target="_blank">Ver local</a>';
-        }
-        layer.bindPopup(popupContent);
+    function renderizarPontos(features) {
+      todosPontos.forEach(obj => map.removeLayer(obj.marker));
+      todosPontos = [];
 
-        // Rótulo ao lado do marcador (código + primeiro e segundo nome)
-        var title = props.titulo || '';
-        var code = '';
-        if (/^\\d+/.test(title)) {
-          code = title.split(' ')[0];
-        } else {
-          var codeMatch = title.match(/-\\s*(\\d+)\\s*-/);
-          if (codeMatch) code = codeMatch[1];
-        }
-        // Remove código e marcadores iniciais para obter o nome
-        var namePart = title;
-        if (code) {
-          var idx = title.indexOf(code);
-          namePart = title.substring(idx + code.length);
-        }
-        namePart = namePart.replace(/^[-\\s]+/, ''); // remove traços/espaços iniciais
-        if (namePart.toUpperCase().startsWith('(C)')) {
-          namePart = namePart.substring(3);
-          namePart = namePart.replace(/^[-\\s]+/, '');
-        }
-        namePart = namePart.trim();
-        // Pega as primeiras duas palavras do nome restante
-        var nameWords = namePart.split(/\\s+/).slice(0, 2).join(' ');
-        var label = code ? (code + ' - ' + nameWords) : nameWords;
-        layer.bindTooltip(label, { permanent: true, direction: 'right' });
-      }
-    }).addTo(map);
+      features.forEach(feature => {
+        const { coordinates } = feature.geometry;
+        const { titulo, data_inicio, descricao, localizacao } = feature.properties;
+        const dataObj = new Date(data_inicio);
+        const mes = dataObj.getMonth();
 
-    // Carrega os dados GeoJSON externamente
-    fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
-      .then(response => response.json())
-      .then(data => {
-        window.allFeatures = data.features; // guarda todas as features para filtro
-        markersLayer.addData(data);         // adiciona todos os pontos no mapa inicialmente
-        // Centraliza/ajusta o zoom do mapa para mostrar todos os marcadores
-        var bounds = markersLayer.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds);
-        } else {
-          map.setView([0, 0], 2);
-        }
+        const popupContent = `
+          <b>${titulo}</b><br>
+          <i>${data_inicio}</i><br>
+          <p>${descricao}</p><br>
+          <a href="${localizacao}" target="_blank">Ver localização</a>
+        `;
+
+        const marker = L.marker([coordinates[1], coordinates[0]], {
+          icon: L.icon({
+            iconUrl: 'https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=pin|FF0000',
+            iconSize: [30, 45],
+            iconAnchor: [15, 42],
+            popupAnchor: [0, -36]
+          })
+        }).addTo(map).bindPopup(popupContent);
+
+        const nomeResumido = titulo.match(/\d+ - ([^\s]+)(?: ([^\s]+))?/);
+        const nome = nomeResumido ? `${nomeResumido[1]} ${nomeResumido[2] || ''}` : '';
+
+        const label = L.divIcon({
+          className: 'label-nome',
+          html: nome,
+          iconSize: [100, 10],
+          iconAnchor: [0, 0]
+        });
+
+        const labelMarker = L.marker([coordinates[1], coordinates[0]], { icon: label }).addTo(map);
+
+        todosPontos.push({ marker, labelMarker, mes });
+      });
+    }
+
+    function adicionarFiltro(data) {
+      const select = document.createElement('select');
+      select.id = 'mesFiltro';
+      select.innerHTML = `<option value="todos">Todos os meses</option>` +
+        [...new Set(data.features.map(f => new Date(f.properties.data_inicio).getMonth()))]
+          .sort((a, b) => a - b)
+          .map(m => `<option value="${m}">${new Date(0, m).toLocaleString('pt-BR', { month: 'long' })}</option>`) // pt-BR meses
+          .join('');
+
+      select.addEventListener('change', e => {
+        const mesSelecionado = e.target.value;
+        todosPontos.forEach(obj => {
+          const mostrar = mesSelecionado === 'todos' || obj.mes == mesSelecionado;
+          if (mostrar) {
+            obj.marker.addTo(map);
+            obj.labelMarker.addTo(map);
+          } else {
+            map.removeLayer(obj.marker);
+            map.removeLayer(obj.labelMarker);
+          }
+        });
       });
 
-    // Filtro de marcadores por mês
-    document.getElementById('monthFilter').addEventListener('change', function() {
-      var selected = this.value;
-      // Limpa marcadores atuais
-      markersLayer.clearLayers();
-      if (selected === 'all') {
-        // Mostrar todos os marcadores
-        markersLayer.addData(window.allFeatures);
-      } else {
-        var month = parseInt(selected, 10);
-        // Filtra features cujo mês (data_inicio) corresponda ao selecionado
-        var filteredFeatures = {
-          type: 'FeatureCollection',
-          features: window.allFeatures.filter(function(feat) {
-            if (!feat.properties.data_inicio) return false;
-            var m = parseInt(feat.properties.data_inicio.substring(5, 7), 10);
-            return m === month;
-          })
-        };
-        markersLayer.addData(filteredFeatures);
-      }
-      // Reajusta o centro/zoom para os marcadores filtrados
-      var newBounds = markersLayer.getBounds();
-      if (newBounds.isValid()) {
-        map.fitBounds(newBounds);
-      }
-    });
-  </script>
+      document.querySelector('.leaflet-top.leaflet-left').appendChild(select);
+    }
 
-  <!-- Animação de destaque final: piscar 3 vezes -->
-  <style>
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-    .blink3 { animation: blink 1s linear 3; }
-  </style>
-  <div class="blink3" style="text-align:center; font-weight:bold;">***</div>
+    document.addEventListener('DOMContentLoaded', carregarGeoJSON);
+  </script>
 </body>
 </html>
