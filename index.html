@@ -7,17 +7,25 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map { height: 92vh; width: 100%; }
+
     #filtros {
       padding: 10px;
       background: #fff;
       border-radius: 6px;
       box-shadow: 0 2px 6px #0002;
-      margin: 10px;
       position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1000;
     }
-    @media(max-width:600px){
-      #filtros { width: 98vw; left: 0; margin: 5px; }
+
+    @media(max-width: 600px) {
+      #filtros {
+        width: 95vw;
+        font-size: 16px;
+        padding: 8px;
+      }
     }
   </style>
 </head>
