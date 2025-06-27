@@ -69,10 +69,11 @@
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, etc'
     });
 
+    // Inicia com o SATÉLITE como padrão
     const mapa = L.map('map', {
       center: [-28.68, -49.37],
       zoom: 9,
-      layers: [osm]
+      layers: [esriSat]
     });
 
     L.control.layers(
@@ -145,4 +146,3 @@
   </script>
 </body>
 </html>
-
