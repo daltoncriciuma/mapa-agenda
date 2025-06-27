@@ -8,7 +8,7 @@
   <style>
     #map { height: 92vh; width: 100%; }
     .leaflet-marker-icon {
-      filter: saturate(2) brightness(1.1);
+      filter: saturate(1.4) brightness(1.1);
     }
     .marker-label {
       color: #003366;
@@ -81,7 +81,7 @@
 
         const marker = L.marker([coordinates[1], coordinates[0]], {
           icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+            iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
             iconSize: [25, 41],
             iconAnchor: [12, 41],
             popupAnchor: [1, -34],
@@ -95,7 +95,8 @@
           html: `<span style='color:#003366;'>${titulo.split(' ').slice(0, 3).join(' ')}</span>`
         });
 
-        const labelMarker = L.marker([coordinates[1], coordinates[0]], { icon: label }).addTo(map);
+        const labelCoords = [coordinates[1], coordinates[0] + 0.008];
+        const labelMarker = L.marker(labelCoords, { icon: label }).addTo(map);
         marcadores.push(marker, labelMarker);
       });
     }
