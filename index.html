@@ -19,6 +19,13 @@
     .leaflet-popup-content {
       font-size: 10px;
     }
+    .marker-label {
+      font-size: 10px;
+      background: white;
+      padding: 1px 3px;
+      border-radius: 3px;
+      box-shadow: 0 0 2px #00000088;
+    }
     @media(max-width:600px){ #filtros{width:98vw;left:0;margin:5px;}}
   </style>
 </head>
@@ -50,7 +57,10 @@
     });
 
     function limparMarcadores() {
-      marcadores.forEach(m => m.remove());
+      marcadores.forEach(({ marker, label }) => {
+        marker.remove();
+        if (label) map.removeLayer(label);
+      });
       marcadores = [];
     }
 
@@ -61,11 +71,13 @@
         filtrados = dadosAgenda.filter(e => {
           let dataStr = e.properties?.data_inicio || "";
           let mes = "";
-          if (dataStr.includes("-")) mes = dataStr.split("-")[1]; // YYYY-MM-DD
-          else if (dataStr.includes("/")) mes = dataStr.split("/")[1]; // DD/MM/YYYY
+          if (dataStr.includes("-")) mes = dataStr.split("-")[1];
+          else if (dataStr.includes("/")) mes = dataStr.split("/")[1];
           return mes === filtroMes;
         });
       }
+
+      const bounds = L.latLngBounds([]);
 
       filtrados.forEach(e => {
         const props = e.properties || {};
@@ -79,11 +91,27 @@
             const data = props.data_inicio || "";
             const descricao = props.descricao || "";
             const popup = `<b>${codigo} - ${nome}</b><br><b>${data}</b><br>${descricao}`;
-            const marker = L.marker([lat, lng], { icon: iconeVermelho }).addTo(map).bindPopup(popup);
-            marcadores.push(marker);
+
+            const marker = L.marker([lat, lng], { icon: iconeVermelho }).bindPopup(popup).addTo(map);
+
+            const label = L.marker([lat, lng], {
+              icon: L.divIcon({
+                className: 'marker-label',
+                html: `${codigo} - ${nome}`,
+                iconAnchor: [-10, 25]
+              }),
+              interactive: false
+            }).addTo(map);
+
+            marcadores.push({ marker, label });
+            bounds.extend([lat, lng]);
           }
         }
       });
+
+      if (filtrados.length > 0) {
+        map.fitBounds(bounds.pad(0.2));
+      }
 
       console.log("Total de pinos desenhados:", marcadores.length);
     }
@@ -99,7 +127,7 @@
           "05":"Maio", "06":"Junho", "07":"Julho", "08":"Agosto",
           "09":"Setembro", "10":"Outubro", "11":"Novembro", "12":"Dezembro"
         };
-        Object.keys(nomesMeses).sort((a, b) => parseInt(a) - parseInt(b)).forEach(mes => {
+        Object.keys(nomesMeses).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(mes => {
           const opt = document.createElement("option");
           opt.value = mes;
           opt.textContent = `${mes} - ${nomesMeses[mes]}`;
