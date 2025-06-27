@@ -1,0 +1,149 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "2653 - ROCHA ALIMENTOS - SANGÃO/DANIEL",
+        "data_inicio": "2025-03-07 08:00",
+        "descricao": "...",
+        "localizacao": " https://goo.gl/maps/z4UPvNeZhXG7ohE48"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -491.235351,
+          -28.627243
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "5527 - ANJO QUÍMICA - MORRO DA FUMAÇA",
+        "data_inicio": "2025-03-07 10:00",
+        "descricao": "...",
+        "localizacao": "https://maps.app.goo.gl/jDG63MK3L5BmvXfc8"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -493.423926,
+          -28.6376427
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "2184 - POSTO AROLDO SOBRINHO - CRICIÚMA",
+        "data_inicio": "2025-04-03 15:00",
+        "descricao": "...",
+        "localizacao": "https://goo.gl/maps/YydY4V9B7nAxb2Rp8"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -494.315832,
+          -28.7028473
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "6095-IDEALIZE ENGENHARIA- MORRO GRANDE",
+        "data_inicio": "2025-04-30 14:00",
+        "descricao": "...",
+        "localizacao": "https://maps.app.goo.gl/rf3bv1Dq3hu9DUJP8"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -497.615738,
+          -28.697382
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "6136-PAULINO RAUL GARCIA- JARDIM MARISTELA",
+        "data_inicio": "2025-05-13 10:00",
+        "descricao": "...",
+        "localizacao": "https://maps.app.goo.gl/xTXJSMmNJ6Sa9GDw6"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -493.48762,
+          -28.6915353
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "HORA FIXA 6130 - POSTO SONHO MEU- SANGÃO CRICIUMA",
+        "data_inicio": "2025-05-23 08:30",
+        "descricao": "...",
+        "localizacao": "https://goo.gl/maps/k3sUBSBU2ga1uUos6"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -494.12225,
+          -28.7503912
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "HORA FIXA 6259-MARIA ZELIA- BALN. RINCÃO",
+        "data_inicio": "2025-06-25 08:30",
+        "descricao": "...",
+        "localizacao": "https://maps.app.goo.gl/MhvU9mu6m1Z2Sy4u7"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -493.103752,
+          -28.8149929
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA) - CRICIUMA - ENG. EDUARDO PADOIN ",
+        "data_inicio": "2025-10-01 08:00",
+        "descricao": "...",
+        "localizacao": "https://goo.gl/maps/k3sUBSBU2ga1uUos6"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -494.12225,
+          -28.7503912
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "titulo": "DATA FIXA - 2184 - POSTO AROLDO SOBRINHO - CRICIÚMA - G. GISLAINE/LÉO GERENTE",
+        "data_inicio": "2025-11-03 09:15",
+        "descricao": "...",
+        "localizacao": " https://goo.gl/maps/YydY4V9B7nAxb2Rp8"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -494.315832,
+          -28.7028473
+        ]
+      }
+    }
+  ]
+}
