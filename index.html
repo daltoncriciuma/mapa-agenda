@@ -4,53 +4,49 @@
   <meta charset="utf-8" />
   <title>Mapa de Compromissos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 94vh; width: 100%; }
-    .label-nome {
-      color: red;
+    #map { height: 92vh; width: 100%; }
+    .leaflet-marker-icon {
+      filter: hue-rotate(0deg) saturate(10) brightness(0.9);
+    }
+    .marker-label {
+      color: #003366;
       font-size: 10px;
+      font-weight: bold;
       white-space: nowrap;
     }
-    .leaflet-top.leaflet-left {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-    .leaflet-control-container .leaflet-top {
-      pointer-events: none;
-    }
-    #mesFiltro {
-      pointer-events: auto;
-      font-size: 14px;
+    .month-filter {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
       padding: 4px;
-      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <div class="month-filter">
+    <select id="monthSelect" onchange="filtrarPorMes()">
+      <option value="">Todos os meses</option>
+    </select>
+  </div>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    let map;
-    let todosPontos = [];
+    let todosDados = [];
+    let marcadores = [];
 
     function carregarGeoJSON() {
       fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')
         .then(response => response.json())
         .then(data => {
-          map = L.map('map', {
-            center: [-28.65, -49.25],
-            zoom: 9,
-            layers: [
-              L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-              })
-            ]
-          });
-
-          adicionarFiltro(data);
-          renderizarPontos(data.features);
+          todosDados = data.features;
+          inicializarMapa();
+          popularFiltroMes();
+          renderizarPontos(todosDados);
         })
         .catch(error => {
           console.error('Erro ao carregar o arquivo JSON:', error);
@@ -58,15 +54,23 @@
         });
     }
 
+    let map;
+    function inicializarMapa() {
+      map = L.map('map').setView([-28.626, -49.242], 9);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+    }
+
     function renderizarPontos(features) {
-      todosPontos.forEach(obj => map.removeLayer(obj.marker));
-      todosPontos = [];
+      marcadores.forEach(m => map.removeLayer(m));
+      marcadores = [];
 
       features.forEach(feature => {
         const { coordinates } = feature.geometry;
         const { titulo, data_inicio, descricao, localizacao } = feature.properties;
-        const dataObj = new Date(data_inicio);
-        const mes = dataObj.getMonth();
 
         const popupContent = `
           <b>${titulo}</b><br>
@@ -77,53 +81,54 @@
 
         const marker = L.marker([coordinates[1], coordinates[0]], {
           icon: L.icon({
-            iconUrl: 'https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=pin|FF0000',
-            iconSize: [30, 45],
-            iconAnchor: [15, 42],
-            popupAnchor: [0, -36]
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+            shadowSize: [41, 41]
           })
         }).addTo(map).bindPopup(popupContent);
 
-        const nomeResumido = titulo.match(/\d+ - ([^\s]+)(?: ([^\s]+))?/);
-        const nome = nomeResumido ? `${nomeResumido[1]} ${nomeResumido[2] || ''}` : '';
-
         const label = L.divIcon({
-          className: 'label-nome',
-          html: nome,
-          iconSize: [100, 10],
-          iconAnchor: [0, 0]
+          className: 'marker-label',
+          html: titulo.split(' ').slice(0, 3).join(' ')
         });
 
         const labelMarker = L.marker([coordinates[1], coordinates[0]], { icon: label }).addTo(map);
-
-        todosPontos.push({ marker, labelMarker, mes });
+        marcadores.push(marker, labelMarker);
       });
     }
 
-    function adicionarFiltro(data) {
-      const select = document.createElement('select');
-      select.id = 'mesFiltro';
-      select.innerHTML = `<option value="todos">Todos os meses</option>` +
-        [...new Set(data.features.map(f => new Date(f.properties.data_inicio).getMonth()))]
-          .sort((a, b) => a - b)
-          .map(m => `<option value="${m}">${new Date(0, m).toLocaleString('pt-BR', { month: 'long' })}</option>`) // pt-BR meses
-          .join('');
+    function popularFiltroMes() {
+      const meses = new Set();
 
-      select.addEventListener('change', e => {
-        const mesSelecionado = e.target.value;
-        todosPontos.forEach(obj => {
-          const mostrar = mesSelecionado === 'todos' || obj.mes == mesSelecionado;
-          if (mostrar) {
-            obj.marker.addTo(map);
-            obj.labelMarker.addTo(map);
-          } else {
-            map.removeLayer(obj.marker);
-            map.removeLayer(obj.labelMarker);
-          }
-        });
+      todosDados.forEach(f => {
+        const data = new Date(f.properties.data_inicio);
+        const nomeMes = data.toLocaleString('pt-BR', { month: 'long' });
+        meses.add(nomeMes);
       });
 
-      document.querySelector('.leaflet-top.leaflet-left').appendChild(select);
+      const select = document.getElementById('monthSelect');
+      [...meses].sort((a, b) => new Date(`1 ${a} 2000`) - new Date(`1 ${b} 2000`)).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        select.appendChild(opt);
+      });
+    }
+
+    function filtrarPorMes() {
+      const mesSelecionado = document.getElementById('monthSelect').value;
+      if (!mesSelecionado) {
+        renderizarPontos(todosDados);
+      } else {
+        const filtrado = todosDados.filter(f => {
+          const data = new Date(f.properties.data_inicio);
+          return data.toLocaleString('pt-BR', { month: 'long' }) === mesSelecionado;
+        });
+        renderizarPontos(filtrado);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', carregarGeoJSON);
