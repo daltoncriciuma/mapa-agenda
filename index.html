@@ -19,7 +19,13 @@
       font-size: 14px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    .leaflet-popup-content { font-size: 12px; min-width: 260px; }
+    .leaflet-popup-content {
+      font-size: 12px;
+      min-width: 280px;
+      max-width: 350px;
+      word-break: break-word;
+      line-height: 1.36;
+    }
     .leaflet-tooltip.custom-label {
       font-size: 7px !important;
       background: #fff;
@@ -37,13 +43,37 @@
     .leaflet-control-layers {
       margin-bottom: 25px !important;
     }
-    .popup-prop-label { color:#888;font-size:11px;font-weight:bold;display:inline-block;width:94px;vertical-align:top;}
-    .popup-link {
-      display: inline-block;
-      margin: 4px 0 0 0;
+    .popup-prop-label {
+      color: #888;
       font-size: 11px;
+      font-weight: bold;
+      display: inline-block;
+      width: 94px;
+      vertical-align: top;
+    }
+    .popup-link-block {
+      margin: 6px 0 0 0;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+    }
+    .popup-link-block input {
+      width: 78%;
+      min-width: 120px;
+      max-width: 180px;
+      font-size: 11px;
+      margin-right: 4px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      border: 1px solid #bbb;
+      background: #fcfcfc;
+      color: #333;
+    }
+    .popup-link-block a {
       color: #2166c1;
       text-decoration: underline;
+      font-size: 11px;
+      margin-left: 4px;
       word-break: break-all;
     }
     .popup-desc {
@@ -83,11 +113,11 @@
       attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, etc'
     });
 
-    // Inicia com o MAPA padrão
+    // Satélite como padrão
     const mapa = L.map('map', {
       center: [-28.68, -49.37],
       zoom: 9,
-      layers: [osm]
+      layers: [esriSat]
     });
 
     L.control.layers(
@@ -108,8 +138,12 @@
 
     function gerarPopupCompleto(props) {
       let html = `<div><b>${props.titulo || ''}</b></div>`;
-      if(props.data_inicio)
-        html += `<div class="popup-prop-label">Data:</div> <span>${props.data_inicio}</span><br>`;
+
+      // DATA: tenta vários campos, ordem: data_inicio, data, inicio, data_inicio_evento
+      let data = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || '';
+      if(data)
+        html += `<div class="popup-prop-label">Data:</div> <span>${data}</span><br>`;
+
       if(props.status)
         html += `<div class="popup-prop-label">Status:</div> <span>${props.status}</span><br>`;
       if(props['evento_recorrente'])
@@ -118,15 +152,21 @@
         html += `<div class="popup-prop-label">Convidados:</div> <span>${props['convidados']}</span><br>`;
       if(props['rota'])
         html += `<div class="popup-prop-label">Rota:</div> <span>${props['rota']}</span><br>`;
-      if(props['localizacao'])
-        html += `<a class="popup-link" href="${props['localizacao']}" target="_blank">Ver localização</a><br>`;
+
+      // Localização: mostra input editável E link
+      if(props['localizacao']) {
+        html += `<div class="popup-link-block"><input readonly value="${props['localizacao']}" onclick="this.select();" />`;
+        html += `<a href="${props['localizacao']}" target="_blank" title="Abrir no mapa">Abrir</a></div>`;
+      }
+
       if(props['descricao'])
         html += `<div class="popup-desc">${props['descricao']}</div>`;
-      // Adiciona quaisquer outros campos
+
+      // Adiciona outros campos extras
       for (let k in props) {
-        if(['titulo','data_inicio','status','evento_recorrente','convidados','rota','localizacao','descricao'].indexOf(k) === -1) {
+        if(['titulo','data_inicio','data','inicio','data_inicio_evento','status','evento_recorrente','convidados','rota','localizacao','descricao'].indexOf(k) === -1) {
           let val = props[k];
-          if(val && typeof val === 'string' && val.length < 100)
+          if(val && typeof val === 'string' && val.length < 180)
             html += `<div class="popup-prop-label">${k[0].toUpperCase() + k.substr(1)}:</div> <span>${val}</span><br>`;
         }
       }
@@ -141,7 +181,7 @@
       todosPinos.forEach(ponto => {
         const props = ponto.properties;
         const coords = ponto.geometry.coordinates;
-        const data = props.data_inicio || props.inicio || "";
+        const data = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || "";
         const mes = data ? (data.split('-')[1] || "01") : "01";
         if (mesFiltro !== "Todos" && mes !== mesFiltro) return;
         if (!coords || coords.length !== 2) return;
