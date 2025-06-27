@@ -16,7 +16,7 @@
   <script>
     // Função para carregar o arquivo JSON e adicionar os marcadores no mapa
     function carregarGeoJSON() {
-      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')  // Altere o caminho para o seu JSON se necessário
+      fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pinos.json')  // CORRIGIDO: nome correto do arquivo!
         .then(response => response.json())  // Converte a resposta para JSON
         .then(data => {
           const map = L.map('map').setView([-28.626, -49.242], 12);  // Define o centro e zoom do mapa
@@ -29,7 +29,6 @@
 
           // Adiciona marcadores para cada ponto do GeoJSON
           data.features.forEach(feature => {
-            // Cria o marcador
             const { coordinates } = feature.geometry;
             const { titulo, data_inicio, descricao, localizacao } = feature.properties;
 
@@ -40,7 +39,6 @@
               <a href="${localizacao}" target="_blank">Ver localização</a>
             `;
 
-            // Cria o marcador e adiciona ao mapa
             L.marker([coordinates[1], coordinates[0]])  // Latitude, Longitude invertido para o Leaflet
               .addTo(map)
               .bindPopup(popupContent);
