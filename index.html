@@ -19,9 +19,16 @@
       z-index: 1000;
     }
     @media(max-width:600px){
-      #filtros{ width: 98vw; margin: 5px; left: 50%; transform: translateX(-50%); }
+      #filtros{width:98vw;left:0;transform:none;margin:5px;}
     }
-    .leaflet-popup-content { font-size: 10px; }
+    .marker-label {
+      font-size: 10px;
+      font-weight: bold;
+      background: white;
+      padding: 2px 4px;
+      border-radius: 3px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
@@ -36,12 +43,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     let marcadores = [];
-    let dadosGeo = [];
-    let map = L.map('map').setView([-28.67, -49.3], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    let dadosAgenda = [];
 
     function limparMarcadores() {
       marcadores.forEach(m => m.remove());
@@ -50,61 +52,71 @@
 
     function adicionarMarcadores(filtroMes) {
       limparMarcadores();
-      let coordenadasSet = new Set();
-      let filtrados = filtroMes === "todos"
-        ? dadosGeo.features
-        : dadosGeo.features.filter(e => {
-            let data = e.properties.data_inicio || "";
-            let mes = data.includes("-") ? data.split("-")[1] : "";
-            return mes === filtroMes;
-          });
+      let filtrados = dadosAgenda;
 
-      filtrados.forEach(f => {
-        let props = f.properties;
-        let coords = f.geometry.coordinates;
-        if (!coords || coords.length !== 2) return;
+      if(filtroMes !== "todos") {
+        filtrados = dadosAgenda.filter(e => {
+          let dataStr = e.properties?.data_inicio || e.data || "";
+          let mes = "";
+          if(dataStr.includes("-")) mes = dataStr.split("-")[1];
+          else if(dataStr.includes("/")) mes = dataStr.split("/")[1];
+          return mes === filtroMes;
+        });
+      }
 
-        let lat = coords[1];
-        let lng = coords[0];
+      filtrados.forEach(e => {
+        let lat = e.geometry?.coordinates?.[1] || e.latitude;
+        let lng = e.geometry?.coordinates?.[0] || e.longitude;
+        let titulo = e.properties?.titulo || e.titulo || "";
+        let data = e.properties?.data_inicio || e.data || "";
 
-        let chaveCoord = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-        if (coordenadasSet.has(chaveCoord)) {
-          console.warn("Ponto duplicado (sobreposto):", props.titulo);
-        } else {
-          coordenadasSet.add(chaveCoord);
+        if (lat && lng) {
+          let marker = L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(`<div style="font-size:11px;"><b>${titulo}</b><br>${data}</div>`);
+          
+          let labelContent = titulo.split(" - ").slice(0,2).join(" - ");
+          marker.bindTooltip(labelContent, { permanent: true, direction: "right", className: 'marker-label' });
+          marcadores.push(marker);
         }
-
-        let textoPopup = `<b>${props.titulo}</b><br>${props.data_inicio || ""}`;
-        let marker = L.marker([lat, lng]).addTo(map).bindPopup(textoPopup);
-        marcadores.push(marker);
       });
 
-      console.log(`Total de pinos desenhados: ${marcadores.length}`);
+      console.log("Total de pinos desenhados:", filtrados.length);
     }
 
-    fetch("pinos.json")
+    const map = L.map('map').setView([-28.626, -49.242], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    fetch('pinos.json')
       .then(resp => resp.json())
       .then(json => {
-        dadosGeo = json;
+        dadosAgenda = json.features || json;
 
-        const filtro = document.getElementById("filtroMes");
+        let filtroMes = document.getElementById("filtroMes");
         const nomesMeses = {
           "01":"Janeiro", "02":"Fevereiro", "03":"Março", "04":"Abril", "05":"Maio", "06":"Junho",
           "07":"Julho", "08":"Agosto", "09":"Setembro", "10":"Outubro", "11":"Novembro", "12":"Dezembro"
         };
 
-        for (let i = 1; i <= 12; i++) {
-          let mes = i.toString().padStart(2, "0");
+        Object.keys(nomesMeses).forEach(mes => {
           let opt = document.createElement("option");
           opt.value = mes;
           opt.textContent = `${mes} - ${nomesMeses[mes]}`;
-          filtro.appendChild(opt);
-        }
+          filtroMes.appendChild(opt);
+        });
 
         adicionarMarcadores("todos");
-        filtro.addEventListener("change", ev => adicionarMarcadores(ev.target.value));
+
+        filtroMes.addEventListener("change", (ev)=>{
+          adicionarMarcadores(ev.target.value);
+        });
       })
-      .catch(err => alert("Erro ao carregar pinos.json!\n\n" + err));
+      .catch(err => {
+        alert("Erro ao carregar os dados!\n\n" + err);
+      });
   </script>
 </body>
 </html>
