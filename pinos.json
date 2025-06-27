@@ -11,7 +11,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.123535, -28.627243]
+        "coordinates": [-49.1235351, -28.627243]
       }
     },
     {
@@ -24,7 +24,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.342392, -28.637642]
+        "coordinates": [-49.3423926, -28.6376427]
       }
     },
     {
@@ -37,72 +37,72 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.431583, -28.702847]
+        "coordinates": [-49.4315832, -28.7028473]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "6095-IDEALIZE ENGENHARIA- MORRO GRANDE",
+        "titulo": "6095 - IDEALIZE ENGENHARIA - MORRO GRANDE",
         "data_inicio": "2025-04-30 14:00",
         "descricao": "...",
         "localizacao": "https://maps.app.goo.gl/rf3bv1Dq3hu9DUJP8"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.761573, -28.697382]
+        "coordinates": [-49.7615738, -28.697382]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "6136-PAULINO RAUL GARCIA- JARDIM MARISTELA",
+        "titulo": "6136 - PAULINO RAUL GARCIA - JARDIM MARISTELA",
         "data_inicio": "2025-05-13 10:00",
         "descricao": "...",
         "localizacao": "https://maps.app.goo.gl/xTXJSMmNJ6Sa9GDw6"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.348762, -28.691535]
+        "coordinates": [-49.348762, -28.6915353]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "HORA FIXA 6130 - POSTO SONHO MEU- SANGÃO CRICIUMA",
+        "titulo": "HORA FIXA 6130 - POSTO SONHO MEU - SANGÃO CRICIÚMA",
         "data_inicio": "2025-05-23 08:30",
         "descricao": "...",
         "localizacao": "https://goo.gl/maps/k3sUBSBU2ga1uUos6"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.412225, -28.750391]
+        "coordinates": [-49.41225, -28.7503912]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "HORA FIXA 6259-MARIA ZELIA- BALN. RINCÃO",
+        "titulo": "HORA FIXA 6259 - MARIA ZELIA - BALN. RINCÃO",
         "data_inicio": "2025-06-25 08:30",
         "descricao": "...",
         "localizacao": "https://maps.app.goo.gl/MhvU9mu6m1Z2Sy4u7"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.310375, -28.814993]
+        "coordinates": [-49.3103752, -28.8149929]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "titulo": "6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA) - CRICIUMA - ENG. EDUARDO PADOIN",
+        "titulo": "6130 - POSTO SONHO MEU (ANTIGO POSTO RIVIERA) - CRICIÚMA - ENG. EDUARDO PADOIN",
         "data_inicio": "2025-10-01 08:00",
         "descricao": "...",
         "localizacao": "https://goo.gl/maps/k3sUBSBU2ga1uUos6"
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.412225, -28.750391]
+        "coordinates": [-49.41225, -28.7503912]
       }
     },
     {
@@ -115,7 +115,7 @@
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-49.431583, -28.702847]
+        "coordinates": [-49.4315832, -28.7028473]
       }
     }
   ]
