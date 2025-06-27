@@ -1,244 +1,40 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>Mapa de Compromissos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 95vh; width: 100%; }
-    .filtro-container {
-      position: absolute;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: white;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-size: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    .leaflet-popup-content {
-      font-size: 12px;
-      min-width: 280px;
-      max-width: 350px;
-      word-break: break-word;
-      line-height: 1.36;
-    }
-    .leaflet-tooltip.custom-label {
-      font-size: 7px !important;
-      background: #fff;
-      color: #222;
-      padding: 1px 5px;
-      border-radius: 3px;
-      font-weight: normal;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      border: 1px solid #ddd;
-      white-space: nowrap;
-      opacity: 0.96;
-      line-height: 1.2;
-    }
-    .leaflet-marker-icon { transform: scale(0.65); }
-    .leaflet-control-layers {
-      margin-bottom: 25px !important;
-    }
-    .popup-prop-label {
-      color: #888;
-      font-size: 11px;
-      font-weight: bold;
-      display: inline-block;
-      width: 94px;
-      vertical-align: top;
-    }
-    .popup-link-block {
-      margin: 6px 0 0 0;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-    }
-    .popup-link-block input {
-      width: 78%;
-      min-width: 120px;
-      max-width: 180px;
-      font-size: 11px;
-      margin-right: 4px;
-      padding: 2px 4px;
-      border-radius: 3px;
-      border: 1px solid #bbb;
-      background: #fcfcfc;
-      color: #333;
-    }
-    .popup-link-block a {
-      color: #2166c1;
-      text-decoration: underline;
-      font-size: 11px;
-      margin-left: 4px;
-      word-break: break-all;
-    }
-    .popup-desc {
-      white-space: pre-line;
-      margin: 4px 0 4px 0;
-      font-size: 12px;
-    }
-  </style>
-</head>
-<body>
-  <div class="filtro-container">
-    <label for="mes">Filtrar por mês:</label>
-    <select id="mes">
-      <option value="Todos">Todos</option>
-      <option value="01">01 - Janeiro</option>
-      <option value="02">02 - Fevereiro</option>
-      <option value="03">03 - Março</option>
-      <option value="04">04 - Abril</option>
-      <option value="05">05 - Maio</option>
-      <option value="06">06 - Junho</option>
-      <option value="07">07 - Julho</option>
-      <option value="08">08 - Agosto</option>
-      <option value="09">09 - Setembro</option>
-      <option value="10">10 - Outubro</option>
-      <option value="11">11 - Novembro</option>
-      <option value="12">12 - Dezembro</option>
-    </select>
-  </div>
-  <div id="map"></div>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Camadas base
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    });
-    const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, etc'
-    });
+// Função para carregar o arquivo JSON e adicionar os marcadores no mapa
+function carregarGeoJSON() {
+  fetch('https://raw.githubusercontent.com/daltoncriciuma/mapa-agenda/main/pino.json')  // Altere o caminho para o seu JSON se necessário
+    .then(response => response.json())  // Converte a resposta para JSON
+    .then(data => {
+      const map = L.map('map').setView([-28.626, -49.242], 12);  // Define o centro e zoom do mapa
 
-    // Mapa como padrão
-    const mapa = L.map('map', {
-      center: [-28.68, -49.37],
-      zoom: 9,
-      layers: [osm]
-    });
+      // Adiciona a camada de mapa (a base do mapa)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
 
-    L.control.layers(
-      { "Mapa": osm, "Satélite": esriSat },
-      null,
-      { position: 'bottomright', collapsed: false }
-    ).addTo(mapa);
+      // Adiciona marcadores para cada ponto do GeoJSON
+      data.features.forEach(feature => {
+        // Cria o marcador
+        const { coordinates } = feature.geometry;
+        const { titulo, data_inicio, descricao, localizacao } = feature.properties;
 
-    let todosPinos = [];
-    let marcadores = [];
+        const popupContent = `
+          <b>${titulo}</b><br>
+          <i>${data_inicio}</i><br>
+          <p>${descricao}</p><br>
+          <a href="${localizacao}" target="_blank">Ver localização</a>
+        `;
 
-    function formatarLabel(titulo) {
-      let partes = titulo.split("-");
-      let codigo = (partes[0] || '').trim();
-      let nome = (partes[1] || '').trim().split(' ');
-      return `${codigo} - ${nome[0] || ''} ${nome[1] || ''}`.trim();
-    }
-
-    // Função para formatar data no padrão DD/MM/YY
-    function formatarData(data) {
-      if(!data) return '';
-      // tenta formato YYYY-MM-DD HH:mm ou só YYYY-MM-DD
-      let m = data.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}:\d{2}))?/);
-      if(m) {
-        let dia = m[3];
-        let mes = m[2];
-        let ano = m[1].slice(-2);
-        let hora = m[4] ? ' ' + m[4] : '';
-        return `${dia}/${mes}/${ano}${hora}`;
-      }
-      return data;
-    }
-
-    function gerarPopupCompleto(props) {
-      // DATA: tenta vários campos, ordem: data_inicio, data, inicio, data_inicio_evento
-      let dataStr = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || '';
-      let dataFormatada = formatarData(dataStr);
-
-      let html = '';
-      if (dataFormatada) html += `<b>${dataFormatada}</b><br>`;
-      html += `<div>${props.titulo || ''}</div>`;
-
-      if(props.status)
-        html += `<div class="popup-prop-label">Status:</div> <span>${props.status}</span><br>`;
-      if(props['evento_recorrente'])
-        html += `<div class="popup-prop-label">Recorrente:</div> <span>${props['evento_recorrente']}</span><br>`;
-      if(props['convidados'])
-        html += `<div class="popup-prop-label">Convidados:</div> <span>${props['convidados']}</span><br>`;
-      if(props['rota'])
-        html += `<div class="popup-prop-label">Rota:</div> <span>${props['rota']}</span><br>`;
-
-      // Localização: mostra input editável E link
-      if(props['localizacao']) {
-        html += `<div class="popup-link-block"><input readonly value="${props['localizacao']}" onclick="this.select();" />`;
-        html += `<a href="${props['localizacao']}" target="_blank" title="Abrir no mapa">Abrir</a></div>`;
-      }
-
-      if(props['descricao'])
-        html += `<div class="popup-desc">${props['descricao']}</div>`;
-
-      // Adiciona outros campos extras
-      for (let k in props) {
-        if(['titulo','data_inicio','data','inicio','data_inicio_evento','status','evento_recorrente','convidados','rota','localizacao','descricao'].indexOf(k) === -1) {
-          let val = props[k];
-          if(val && typeof val === 'string' && val.length < 180)
-            html += `<div class="popup-prop-label">${k[0].toUpperCase() + k.substr(1)}:</div> <span>${val}</span><br>`;
-        }
-      }
-      return html;
-    }
-
-    function carregarPinos(mesFiltro) {
-      marcadores.forEach(m => mapa.removeLayer(m));
-      marcadores = [];
-      let bounds = [];
-
-      todosPinos.forEach(ponto => {
-        const props = ponto.properties;
-        const coords = ponto.geometry.coordinates;
-        const data = props.data_inicio || props.data || props.inicio || props.data_inicio_evento || "";
-        const mes = data ? (data.split('-')[1] || "01") : "01";
-        if (mesFiltro !== "Todos" && mes !== mesFiltro) return;
-        if (!coords || coords.length !== 2) return;
-        let latlng = [coords[1], coords[0]];
-        bounds.push(latlng);
-
-        let marker = L.marker(latlng, {
-          icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-            iconSize: [18, 29],
-            iconAnchor: [9, 29],
-            popupAnchor: [1, -25]
-          })
-        }).addTo(mapa);
-
-        marker.bindPopup(gerarPopupCompleto(props));
-
-        marker.bindTooltip(formatarLabel(props.titulo), {
-          permanent: true,
-          direction: 'right',
-          className: 'custom-label',
-          offset: [11, 0]
-        });
-
-        marcadores.push(marker);
+        // Cria o marcador e adiciona ao mapa
+        L.marker([coordinates[1], coordinates[0]])  // Latitude, Longitude invertido para o Leaflet
+          .addTo(map)
+          .bindPopup(popupContent);
       });
+    })
+    .catch(error => {
+      console.error('Erro ao carregar o arquivo JSON:', error);
+      alert('Erro ao carregar os dados do mapa!');
+    });
+}
 
-      if(bounds.length > 0) {
-        mapa.fitBounds(bounds, { padding: [40, 40] });
-      }
-    }
-
-    fetch('pinos.json')
-      .then(resp => resp.json())
-      .then(geojson => {
-        todosPinos = geojson.features;
-        document.getElementById('mes').addEventListener('change', e => {
-          carregarPinos(e.target.value);
-        });
-        carregarPinos(document.getElementById('mes').value);
-      });
-  </script>
-</body>
-</html>
+// Carregar o mapa quando a página for carregada
+document.addEventListener('DOMContentLoaded', carregarGeoJSON);
