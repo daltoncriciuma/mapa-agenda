@@ -3,146 +3,136 @@
 <head>
   <meta charset="utf-8" />
   <title>Mapa de Compromissos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    #map { height: 92vh; width: 100%; }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #map {
+      height: 92vh;
+      width: 100%;
+    }
+
     #filtros {
       padding: 10px;
       background: #fff;
       border-radius: 6px;
       box-shadow: 0 2px 6px #0002;
-      margin: 10px;
       position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1000;
+      font-size: 14px;
     }
-    .leaflet-popup-content {
-      font-size: 10px;
-    }
+
     .marker-label {
       font-size: 10px;
-      background: white;
-      padding: 1px 3px;
-      border-radius: 3px;
-      box-shadow: 0 0 2px #00000088;
+      color: #000;
+      background: #fff;
+      padding: 1px 4px;
+      border-radius: 4px;
+      white-space: nowrap;
     }
-    @media(max-width:600px){ #filtros{width:98vw;left:0;margin:5px;}}
   </style>
 </head>
 <body>
   <div id="filtros">
-    <label for="filtroMes">Filtrar por mês:</label>
+    Filtrar por mês:
     <select id="filtroMes">
-      <option value="todos">Todos</option>
+      <option value="Todos">Todos</option>
+      <option value="01">01 - Janeiro</option>
+      <option value="02">02 - Fevereiro</option>
+      <option value="03">03 - Março</option>
+      <option value="04">04 - Abril</option>
+      <option value="05">05 - Maio</option>
+      <option value="06">06 - Junho</option>
+      <option value="07">07 - Julho</option>
+      <option value="08">08 - Agosto</option>
+      <option value="09">09 - Setembro</option>
+      <option value="10">10 - Outubro</option>
+      <option value="11">11 - Novembro</option>
+      <option value="12">12 - Dezembro</option>
     </select>
   </div>
+
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    let marcadores = [];
-    let dadosAgenda = [];
+    const map = L.map('map').setView([-28.7, -49.4], 9);
 
-    const map = L.map('map').setView([-28.626, -49.242], 10);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    const iconeVermelho = L.icon({
+    const customIcon = L.icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34]
+      iconSize: [20, 30],
+      iconAnchor: [10, 30],
+      popupAnchor: [1, -30]
     });
 
-    function limparMarcadores() {
-      marcadores.forEach(({ marker, label }) => {
-        marker.remove();
-        if (label) map.removeLayer(label);
-      });
-      marcadores = [];
-    }
-
-    function adicionarMarcadores(filtroMes) {
-      limparMarcadores();
-      let filtrados = dadosAgenda;
-      if (filtroMes !== "todos") {
-        filtrados = dadosAgenda.filter(e => {
-          let dataStr = e.properties?.data_inicio || "";
-          let mes = "";
-          if (dataStr.includes("-")) mes = dataStr.split("-")[1];
-          else if (dataStr.includes("/")) mes = dataStr.split("/")[1];
-          return mes === filtroMes;
-        });
+    function formatarNome(titulo) {
+      const partes = titulo.split('-').map(p => p.trim());
+      if (partes.length >= 2) {
+        const palavras = partes[1].split(' ');
+        return `${partes[0]} - ${palavras[0]} ${palavras[1] || ''}`.trim();
       }
-
-      const bounds = L.latLngBounds([]);
-
-      filtrados.forEach(e => {
-        const props = e.properties || {};
-        const coords = e.geometry?.coordinates || [];
-        if (coords.length === 2) {
-          const [lng, lat] = coords.map(Number);
-          if (!isNaN(lat) && !isNaN(lng)) {
-            const titulo = props.titulo || "";
-            const codigo = titulo.split("-")[0]?.trim();
-            const nome = titulo.split("-")[1]?.trim();
-            const data = props.data_inicio || "";
-            const descricao = props.descricao || "";
-            const popup = `<b>${codigo} - ${nome}</b><br><b>${data}</b><br>${descricao}`;
-
-            const marker = L.marker([lat, lng], { icon: iconeVermelho }).bindPopup(popup).addTo(map);
-
-            const label = L.marker([lat, lng], {
-              icon: L.divIcon({
-                className: 'marker-label',
-                html: `${codigo} - ${nome}`,
-                iconAnchor: [-10, 25]
-              }),
-              interactive: false
-            }).addTo(map);
-
-            marcadores.push({ marker, label });
-            bounds.extend([lat, lng]);
-          }
-        }
-      });
-
-      if (filtrados.length > 0) {
-        map.fitBounds(bounds.pad(0.2));
-      }
-
-      console.log("Total de pinos desenhados:", marcadores.length);
+      return titulo;
     }
 
     fetch('pinos.json')
-      .then(resp => resp.json())
-      .then(json => {
-        dadosAgenda = json.features || [];
+      .then(response => response.json())
+      .then(data => {
+        const drawnPoints = new Set();
+        let totalPinos = 0;
 
-        const filtroMes = document.getElementById("filtroMes");
-        const nomesMeses = {
-          "01":"Janeiro", "02":"Fevereiro", "03":"Março", "04":"Abril",
-          "05":"Maio", "06":"Junho", "07":"Julho", "08":"Agosto",
-          "09":"Setembro", "10":"Outubro", "11":"Novembro", "12":"Dezembro"
-        };
-        Object.keys(nomesMeses).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(mes => {
-          const opt = document.createElement("option");
-          opt.value = mes;
-          opt.textContent = `${mes} - ${nomesMeses[mes]}`;
-          filtroMes.appendChild(opt);
+        data.features.forEach(feature => {
+          const props = feature.properties;
+          const coords = feature.geometry.coordinates;
+          const coordKey = coords.join(',');
+
+          const mes = props.data_inicio?.slice(5, 7);
+          const filtro = document.getElementById('filtroMes').value;
+          if (filtro !== 'Todos' && mes !== filtro) return;
+
+          if (drawnPoints.has(coordKey)) {
+            console.warn('Ponto duplicado (sobreposto):', props.titulo);
+            return;
+          }
+
+          drawnPoints.add(coordKey);
+          totalPinos++;
+
+          const popupHtml = `
+            <strong>${props.titulo}</strong><br>
+            ${props.data_inicio}<br>
+            ${props.descricao}<br>
+            <a href="${props.localizacao}" target="_blank">Ver localização</a>
+          `;
+
+          const marker = L.marker([coords[1], coords[0]], { icon: customIcon }).addTo(map);
+          marker.bindPopup(popupHtml);
+
+          const label = formatarNome(props.titulo);
+          L.marker([coords[1], coords[0]], {
+            icon: L.divIcon({
+              className: 'marker-label',
+              html: label,
+              iconSize: [100, 14],
+              iconAnchor: [-10, -20]
+            })
+          }).addTo(map);
         });
 
-        adicionarMarcadores("todos");
-
-        filtroMes.addEventListener("change", (ev)=>{
-          adicionarMarcadores(ev.target.value);
-        });
-      })
-      .catch(err => {
-        alert("Erro ao carregar pinos.json!\n\nDetalhe: " + err);
+        console.log('Total de pinos desenhados:', totalPinos);
       });
+
+    document.getElementById('filtroMes').addEventListener('change', () => location.reload());
   </script>
 </body>
 </html>
