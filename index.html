@@ -26,16 +26,21 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .marker-label {
-      font-size: 10px;
+      font-size: 9px;
       color: #000;
       background: #fff;
       padding: 1px 4px;
       border-radius: 4px;
       white-space: nowrap;
+      line-height: 1;
+    }
+
+    .leaflet-popup-content {
+      font-size: 11px;
     }
   </style>
 </head>
@@ -71,9 +76,9 @@
 
     const customIcon = L.icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      iconSize: [20, 30],
-      iconAnchor: [10, 30],
-      popupAnchor: [1, -30]
+      iconSize: [15, 24],
+      iconAnchor: [7, 24],
+      popupAnchor: [1, -20]
     });
 
     function formatarNome(titulo) {
@@ -123,8 +128,8 @@
             icon: L.divIcon({
               className: 'marker-label',
               html: label,
-              iconSize: [100, 14],
-              iconAnchor: [-10, -20]
+              iconSize: [80, 12],
+              iconAnchor: [-5, -15]
             })
           }).addTo(map);
         });
