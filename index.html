@@ -21,7 +21,7 @@
     }
     .leaflet-popup-content { font-size: 11px; }
     .custom-label .leaflet-tooltip {
-      font-size: 9px; /* fonte menor */
+      font-size: 9px;
       background: #fff;
       color: #222;
       padding: 1px 6px;
@@ -33,6 +33,9 @@
       opacity: 0.96;
     }
     .leaflet-marker-icon { transform: scale(0.65); }
+    .leaflet-control-layers {
+      margin-bottom: 25px !important; /* Afasta do canto inferior */
+    }
   </style>
 </head>
 <body>
@@ -57,11 +60,31 @@
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const mapa = L.map('map').setView([-28.68, -49.37], 9);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Camadas base
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(mapa);
+    });
+
+    // Satélite (Esri)
+    const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // Mapa
+    const mapa = L.map('map', {
+      center: [-28.68, -49.37],
+      zoom: 9,
+      layers: [osm]
+    });
+
+    // Controle de camadas (base layers)
+    const baseLayers = {
+      "Mapa": osm,
+      "Satélite": esriSat
+    };
+
+    // Adiciona controle no canto inferior direito
+    L.control.layers(baseLayers, null, { position: 'bottomright', collapsed: false }).addTo(mapa);
 
     let todosPinos = [];
     let marcadores = [];
@@ -106,7 +129,7 @@
           permanent: true,
           direction: 'right',
           className: 'custom-label',
-          offset: [11, 0] // MAIS PRÓXIMO do pino!
+          offset: [11, 0] // Próximo do pino!
         });
 
         marcadores.push(marker);
