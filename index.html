@@ -106,7 +106,7 @@
 
         const label = L.divIcon({
           className: 'marker-label',
-          html: `<span style='color:#555555;'>${titulo.split(' ').slice(0, 3).join(' ')}</span>`
+          html: `<span style='color:#555555;'>${titulo.match(/^\d+/)?.[0] || ''} ${titulo.match(/[A-Z][a-zÀ-ú]+/g)?.slice(0,2).join(' ') || ''}</span>`
         });
 
         const labelCoords = [coordinates[1], coordinates[0] + 0.0015];
