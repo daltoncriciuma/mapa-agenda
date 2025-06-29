@@ -74,7 +74,7 @@
         "Mapa padrão": mapaPadrao
       };
 
-      camadaAtual = mapaPadrao.addTo(map); // agora começa com o mapa padrão
+      camadaAtual = mapaPadrao.addTo(map); // inicia com mapa padrão
       L.control.layers(baseMaps).addTo(map);
     }
 
@@ -84,13 +84,15 @@
 
       features.forEach(feature => {
         const { coordinates } = feature.geometry;
-        const { titulo, data_inicio, descricao, localizacao } = feature.properties;
+        const { titulo = '', data_inicio = '', descricao = '', localizacao = '#' } = feature.properties;
 
         const popupContent = `
-          <b>${titulo}</b><br>
-          <i>${data_inicio}</i><br>
-          <p>${descricao}</p><br>
-          <a href="${localizacao}" target="_blank">Ver localização</a>
+          <div style="line-height:1.5em; font-size: 13px">
+            <b>${titulo}</b><br>
+            <i>${data_inicio}</i><br><br>
+            <pre style="white-space:pre-wrap; font-family:inherit;">${descricao}</pre><br>
+            <a href="${localizacao}" target="_blank">Ver localização</a>
+          </div>
         `;
 
         const marker = L.marker([coordinates[1], coordinates[0]], {
@@ -104,9 +106,12 @@
           })
         }).addTo(map).bindPopup(popupContent);
 
+        const cod = titulo.match(/^\d+/)?.[0] || '';
+        const nomes = titulo.match(/[A-Z][a-zÀ-ú]+/g)?.slice(0, 2).join(' ') || '';
+
         const label = L.divIcon({
           className: 'marker-label',
-          html: `<span style='color:#555555;'>${titulo.match(/^\d+/)?.[0] || ''} ${titulo.match(/[A-Z][a-zÀ-ú]+/g)?.slice(0,2).join(' ') || ''}</span>`
+          html: `<span style='color:#555555;'>${cod} ${nomes}</span>`
         });
 
         const labelCoords = [coordinates[1], coordinates[0] + 0.0015];
