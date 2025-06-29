@@ -11,7 +11,7 @@
       filter: saturate(1.2) brightness(1.05);
     }
     .marker-label {
-      color: #cccccc;
+      color: #555555;
       font-size: 10px;
       font-weight: bold;
       white-space: nowrap;
@@ -74,8 +74,7 @@
         "Mapa padrão": mapaPadrao
       };
 
-      camadaAtual = satelite.addTo(map);
-
+      camadaAtual = mapaPadrao.addTo(map); // agora começa com o mapa padrão
       L.control.layers(baseMaps).addTo(map);
     }
 
@@ -107,7 +106,7 @@
 
         const label = L.divIcon({
           className: 'marker-label',
-          html: `<span style='color:#cccccc;'>${titulo.split(' ').slice(0, 3).join(' ')}</span>`
+          html: `<span style='color:#555555;'>${titulo.split(' ').slice(0, 3).join(' ')}</span>`
         });
 
         const labelCoords = [coordinates[1], coordinates[0] + 0.0015];
