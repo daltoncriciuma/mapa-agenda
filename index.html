@@ -41,7 +41,7 @@
     let camadaAtual;
 
     function carregarGeoJSON() {
-      fetch('./pinos.json')
+      fetch('https://daltoncriciuma.github.io/mapa-agenda/pinos.json')
         .then(response => response.json())
         .then(data => {
           todosDados = data.features;
